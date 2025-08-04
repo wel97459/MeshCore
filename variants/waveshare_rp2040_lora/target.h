@@ -6,13 +6,18 @@
 #include <helpers/AutoDiscoverRTCClock.h>
 #include <helpers/radiolib/CustomSX1262Wrapper.h>
 #include <helpers/radiolib/RadioLibWrappers.h>
+#include <helpers/sensors/EnvironmentSensorManager.h>
 #include <helpers/SensorManager.h>
 #include <helpers/rp2040/WaveshareBoard.h>
-
 extern WaveshareBoard board;
 extern WRAPPER_CLASS radio_driver;
 extern AutoDiscoverRTCClock rtc_clock;
-extern SensorManager sensors;
+
+#ifdef ENV_INCLUDE_INA219
+    extern EnvironmentSensorManager sensors;
+#else
+    extern SensorManager sensors;
+#endif
 
 bool radio_init();
 uint32_t radio_get_rng_seed();

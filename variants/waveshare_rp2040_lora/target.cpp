@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <helpers/ArduinoHelpers.h>
+#include <helpers/sensors/EnvironmentSensorManager.h>
 
 WaveshareBoard board;
 
@@ -10,7 +11,11 @@ WRAPPER_CLASS radio_driver(radio, board);
 
 VolatileRTCClock fallback_clock;
 AutoDiscoverRTCClock rtc_clock(fallback_clock);
-SensorManager sensors;
+#ifdef ENV_INCLUDE_INA219
+  EnvironmentSensorManager sensors;
+#else
+  SensorManager sensors;
+#endif
 
 #ifndef LORA_CR
 #define LORA_CR 5
