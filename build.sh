@@ -7,6 +7,15 @@
 # sh build.sh build-repeater-firmwares
 # sh build.sh build-room-server-firmwares
 
+declare -a regions
+regions[0]="AS"
+regions[1]="EU"
+regions[2]="EU_433"
+regions[3]="NZ"
+regions[4]="AS"
+regions[5]="PO"
+regions[6]="US"
+
 # get a list of pio env names that start with "env:"
 get_pio_envs() {
   echo $(pio project config | grep 'env:' | sed 's/env://')
@@ -38,16 +47,25 @@ build_firmware() {
     exit 1
   fi
 
+  # get REGION, which should be provided by the environment
+  if [ -z "$REGION" ]; then
+    echo "REGION must be set in environment with one of the following:"
+    for env in "${regions[@]}"; do
+      echo "export REGION=\"$env\""
+    done
+    exit 1
+  fi
+
   # set firmware version string
   # e.g: v1.0.0-abcdef
-  FIRMWARE_VERSION_STRING="${FIRMWARE_VERSION}-${COMMIT_HASH}"
+  FIRMWARE_VERSION_STRING="${FIRMWARE_VERSION}${REGION}-${COMMIT_HASH}"
 
   # craft filename
   # e.g: RAK_4631_Repeater-v1.0.0-SHA
   FIRMWARE_FILENAME="$1-${FIRMWARE_VERSION_STRING}"
 
   # export build flags for pio so we can inject firmware version info
-  export PLATFORMIO_BUILD_FLAGS="-DFIRMWARE_BUILD_DATE='\"${FIRMWARE_BUILD_DATE}\"' -DFIRMWARE_VERSION='\"${FIRMWARE_VERSION_STRING}\"'"
+  export PLATFORMIO_BUILD_FLAGS="-DFIRMWARE_BUILD_DATE='\"${FIRMWARE_BUILD_DATE}\"' -DFIRMWARE_VERSION='\"${FIRMWARE_VERSION_STRING}\"' -DREGION_${REGION}=1"
 
   # build firmware target
   pio run -e $1
@@ -76,11 +94,19 @@ build_firmware() {
 
 }
 
+build_all_firmware_regions()
+{
+  for env in "${regions[@]}"; do
+    export REGION="$env"
+    build_firmware $1
+  done
+}
+
 # firmwares containing $1 will be built
 build_all_firmwares_matching() {
   envs=($(get_pio_envs_containing_string "$1"))
   for env in "${envs[@]}"; do
-      build_firmware $env
+      build_all_firmware_regions $env
   done
 }
 
@@ -144,6 +170,10 @@ mkdir -p out
 if [[ $1 == "build-firmware" ]]; then
   if [ "$2" ]; then
     build_firmware $2
+  fi
+elif [[ $1 == "build-firmware-regions" ]]; then
+  if [ "$2" ]; then
+    build_all_firmware_regions $2
   fi
 elif [[ $1 == "build-firmwares" ]]; then
   build_firmwares

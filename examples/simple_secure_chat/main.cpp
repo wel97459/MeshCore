@@ -18,23 +18,6 @@
 
 /* ---------------------------------- CONFIGURATION ------------------------------------- */
 
-#define FIRMWARE_VER_TEXT   "v2 (build: 4 Feb 2025)"
-
-#ifndef LORA_FREQ
-  #define LORA_FREQ   915.0
-#endif
-#ifndef LORA_BW
-  #define LORA_BW     250
-#endif
-#ifndef LORA_SF
-  #define LORA_SF     10
-#endif
-#ifndef LORA_CR
-  #define LORA_CR      5
-#endif
-#ifndef LORA_TX_POWER
-  #define LORA_TX_POWER  20
-#endif
 
 #ifndef MAX_CONTACTS
   #define MAX_CONTACTS         100
@@ -501,7 +484,7 @@ public:
         Serial.printf("  ERROR: unknown config: %s\n", config);
       }
     } else if (memcmp(command, "ver", 3) == 0) {
-      Serial.println(FIRMWARE_VER_TEXT);
+      Serial.println(FIRMWARE_VERSION);
     } else if (memcmp(command, "help", 4) == 0) {
       Serial.println("Commands:");
       Serial.println("   set {name|lat|lon|freq|tx|af} {value}");
