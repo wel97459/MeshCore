@@ -1,6 +1,7 @@
 #pragma once
 
 #include <RadioLib.h>
+#include "Defaults.h"
 
 #define RH_RF95_MODEM_STATUS_CLEAR               0x10
 #define RH_RF95_MODEM_STATUS_HEADER_INFO_VALID   0x08
