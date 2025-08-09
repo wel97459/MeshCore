@@ -73,7 +73,7 @@
 //USA
 #if REGION_US
     #undef LORA_FREQ
-    #define LORA_FREQ   915.525
+    #define LORA_FREQ   910.525
 #endif
 
 #if MED_RANGE
