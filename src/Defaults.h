@@ -106,6 +106,10 @@
   #define LORA_CR      5
 #endif
 
+#ifndef LORA_PREAMBLE
+  #define LORA_PREAMBLE 16
+#endif
+
 #ifndef LORA_TX_POWER
   #define LORA_TX_POWER  20
 #endif
