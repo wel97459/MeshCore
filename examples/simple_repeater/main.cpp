@@ -186,7 +186,10 @@ class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
         uint8_t perm_mask = ~(payload[1]);    // NEW: first reserved byte (of 4), is now inverse mask to apply to permissions
 
         telemetry.reset();
+#ifndef INA219_BATT_VOLTAGE
         telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+#endif        
+        telemetry.addTemperature(TELEM_CHANNEL_SELF, board.getInternalTemp());
         // query other sensors -- target specific
         sensors.querySensors((sender->is_admin ? 0xFF : 0x00) & perm_mask, telemetry);
 

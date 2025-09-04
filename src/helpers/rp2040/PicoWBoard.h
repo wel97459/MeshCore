@@ -2,6 +2,7 @@
 
 #include <MeshCore.h>
 #include <Arduino.h>
+#include <hardware/adc.h>
 
 // LoRa radio module pins for PicoW
 #define  P_LORA_DIO_1   20
@@ -49,6 +50,10 @@ public:
     raw = raw / BATTERY_SAMPLES;
 
     return (ADC_MULTIPLIER * raw) / 4096;
+  }
+
+  float getInternalTemp() override {
+    return analogReadTemp();
   }
 
   const char* getManufacturerName() const override {

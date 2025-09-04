@@ -103,6 +103,10 @@ public:
 
     return (5.42 * (3.3 / 1024.0) * raw) * 1000;
   }
+ 
+  float getInternalTemp() override {
+    return temperatureRead();
+  }
 
   const char* getManufacturerName() const override {
     return "Heltec V3";
