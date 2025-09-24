@@ -22,11 +22,11 @@
 /* ------------------------------ Config -------------------------------- */
 
 #ifndef FIRMWARE_BUILD_DATE
-  #define FIRMWARE_BUILD_DATE   "24 Jul 2025"
+  #define FIRMWARE_BUILD_DATE   "1 Sep 2025"
 #endif
 
 #ifndef FIRMWARE_VERSION
-  #define FIRMWARE_VERSION   "v1.7.4"
+  #define FIRMWARE_VERSION   "v1.8.1"
 #endif
 
 #ifndef LORA_FREQ
@@ -159,7 +159,7 @@ class MyMesh : public mesh::Mesh, public CommonCLICallbacks {
   }
 
   void putNeighbour(const mesh::Identity& id, uint32_t timestamp, float snr) {
-  #if MAX_NEIGHBOURS    // check if neighbours enabled    
+  #if MAX_NEIGHBOURS    // check if neighbours enabled
     // find existing neighbour, else use least recently updated
     uint32_t oldest_timestamp = 0xFFFFFFFF;
     NeighbourInfo* neighbour = &neighbours[0];
@@ -589,7 +589,7 @@ public:
     _prefs.cr = LORA_CR;
     _prefs.tx_power_dbm = LORA_TX_POWER;
     _prefs.advert_interval = 1;  // default to 2 minutes for NEW installs
-    _prefs.flood_advert_interval = 3;   // 3 hours
+    _prefs.flood_advert_interval = 12;   // 12 hours
     _prefs.flood_max = 64;
     _prefs.interference_threshold = 0;  // disabled
   }
@@ -611,8 +611,8 @@ public:
   const char* getBuildDate() override { return FIRMWARE_BUILD_DATE; }
   const char* getRole() override { return FIRMWARE_ROLE; }
   const char* getNodeName() { return _prefs.node_name; }
-  NodePrefs* getNodePrefs() { 
-    return &_prefs; 
+  NodePrefs* getNodePrefs() {
+    return &_prefs;
   }
 
   void savePrefs() override {
@@ -719,7 +719,32 @@ public:
     *dp = 0;  // null terminator
   }
 
+  void removeNeighbor(const uint8_t* pubkey, int key_len) override {
+#if MAX_NEIGHBOURS
+    for (int i = 0; i < MAX_NEIGHBOURS; i++) {
+      NeighbourInfo* neighbour = &neighbours[i];
+      if(memcmp(neighbour->id.pub_key, pubkey, key_len) == 0){
+        neighbours[i] = NeighbourInfo(); // clear neighbour entry
+      }
+    }
+#endif
+  }
+
   mesh::LocalIdentity& getSelfId() override { return self_id; }
+
+  void saveIdentity(const mesh::LocalIdentity& new_id) override {
+    self_id = new_id;
+#if defined(NRF52_PLATFORM) || defined(STM32_PLATFORM)
+    IdentityStore store(*_fs, "");
+#elif defined(ESP32)
+    IdentityStore store(*_fs, "/identity");
+#elif defined(RP2040_PLATFORM)
+    IdentityStore store(*_fs, "/identity");
+#else
+    #error "need to define saveIdentity()"
+#endif
+    store.save("_main", self_id);
+  }
 
   void clearStats() override {
     radio_driver.resetStats();
