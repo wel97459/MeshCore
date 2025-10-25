@@ -462,6 +462,18 @@ bool EnvironmentSensorManager::querySensors(uint8_t requester_permissions, Cayen
   return true;
 }
 
+uint16_t EnvironmentSensorManager::getINA219Battery() const {
+  #if ENV_INCLUDE_INA219
+    if (INA219_initialized) {
+      return INA219.getBusVoltage_V()*1000;
+    }else{
+      return 0;
+    }
+  #else
+    return 0;
+  #endif
+    
+}
 
 int EnvironmentSensorManager::getNumSettings() const {
   int settings = 0;

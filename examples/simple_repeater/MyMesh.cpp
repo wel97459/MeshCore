@@ -139,10 +139,15 @@ int MyMesh::handleRequest(ClientInfo *sender, uint32_t sender_timestamp, uint8_t
   // uint32_t now = getRTCClock()->getCurrentTimeUnique();
   // memcpy(reply_data, &now, 4);   // response packets always prefixed with timestamp
   memcpy(reply_data, &sender_timestamp, 4); // reflect sender_timestamp back in response packet (kind of like a 'tag')
+  telemetry.reset();
 
   if (payload[0] == REQ_TYPE_GET_STATUS) {  // guests can also access this now
     RepeaterStats stats;
+    #ifndef INA219_BATT_VOLTAGE
     stats.batt_milli_volts = board.getBattMilliVolts();
+    #else
+    stats.batt_milli_volts = sensors.getINA219Battery();
+    #endif
     stats.curr_tx_queue_len = _mgr->getOutboundCount(0xFFFFFFFF);
     stats.noise_floor = (int16_t)_radio->getNoiseFloor();
     stats.last_rssi = (int16_t)radio_driver.getLastRSSI();
@@ -168,7 +173,12 @@ int MyMesh::handleRequest(ClientInfo *sender, uint32_t sender_timestamp, uint8_t
     uint8_t perm_mask = ~(payload[1]); // NEW: first reserved byte (of 4), is now inverse mask to apply to permissions
 
     telemetry.reset();
-    telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+    #ifndef INA219_BATT_VOLTAGE
+      telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+      #else
+      telemetry.addVoltage(TELEM_CHANNEL_SELF+1, (float)board.getBattMilliVolts() / 1000.0f);
+    #endif
+    telemetry.addTemperature(TELEM_CHANNEL_SELF, board.getInternalTemp());
     // query other sensors -- target specific
     sensors.querySensors((sender->isAdmin() ? 0xFF : 0x00) & perm_mask, telemetry);
 
