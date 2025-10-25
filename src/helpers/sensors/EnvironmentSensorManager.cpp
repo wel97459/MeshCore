@@ -390,9 +390,19 @@ bool EnvironmentSensorManager::querySensors(uint8_t requester_permissions, Cayen
 
     #if ENV_INCLUDE_INA219
     if (INA219_initialized) {
+  
+      #ifdef INA219_BATT_VOLTAGE
+      next_available_channel--;
+      #endif
       telemetry.addVoltage(next_available_channel, INA219.getBusVoltage_V());
+    #ifdef INA219_INVERT_CURRENT
+      telemetry.addCurrent(next_available_channel, -INA219.getCurrent_mA() / 1000);
+    #else
       telemetry.addCurrent(next_available_channel, INA219.getCurrent_mA() / 1000);
+    #endif
+    #ifndef NO_INA219_WATTS
       telemetry.addPower(next_available_channel, INA219.getPower_mW() / 1000);
+    #endif
       next_available_channel++;
     }
     #endif

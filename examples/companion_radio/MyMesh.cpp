@@ -474,7 +474,10 @@ uint8_t MyMesh::onContactRequest(const ContactInfo &contact, uint32_t sender_tim
 
     if (permissions & TELEM_PERM_BASE) { // only respond if base permission bit is set
       telemetry.reset();
+#ifndef INA219_BATT_VOLTAGE
       telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+#endif    
+      telemetry.addTemperature(TELEM_CHANNEL_SELF, board.getInternalTemp());
       // query other sensors -- target specific
       sensors.querySensors(permissions, telemetry);
 
@@ -1288,6 +1291,7 @@ void MyMesh::handleCmdFrame(size_t len) {
   } else if (cmd_frame[0] == CMD_SEND_TELEMETRY_REQ && len == 4) {  // 'self' telemetry request
     telemetry.reset();
     telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+    telemetry.addTemperature(TELEM_CHANNEL_SELF, board.getInternalTemp());
     // query other sensors -- target specific
     sensors.querySensors(0xFF, telemetry);
 

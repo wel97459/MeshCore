@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdint.h>
+#include "Defaults.h"
 
 #define MAX_HASH_SIZE        8
 #define PUB_KEY_SIZE        32
@@ -42,6 +43,7 @@ namespace mesh {
 class MainBoard {
 public:
   virtual uint16_t getBattMilliVolts() = 0;
+  virtual float getInternalTemp() = 0;
   virtual const char* getManufacturerName() const = 0;
   virtual void onBeforeTransmit() { }
   virtual void onAfterTransmit() { }

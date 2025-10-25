@@ -2,6 +2,7 @@
 
 #include <MeshCore.h>
 #include <Arduino.h>
+#include <hardware/adc.h>
 
 // built-ins
 #define  PIN_VBAT_READ    26
@@ -36,6 +37,10 @@ public:
     raw = raw / BATTERY_SAMPLES;
 
     return (ADC_MULTIPLIER * raw) / 4096;
+  }
+
+  float getInternalTemp() override {
+    return analogReadTemp();
   }
 
   const char* getManufacturerName() const override {

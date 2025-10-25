@@ -2,7 +2,7 @@
 
 #include <Arduino.h>
 #include <MeshCore.h>
-
+#include <hardware/adc.h>
 // LoRa radio module pins for Waveshare RP2040-LoRa-HF/LF
 // https://files.waveshare.com/wiki/RP2040-LoRa/Rp2040-lora-sch.pdf
 
@@ -53,6 +53,10 @@ public:
 #endif
   }
 
+  float getInternalTemp() override {
+    return analogReadTemp();
+  }
+  
   const char *getManufacturerName() const override { return "Waveshare RP2040-LoRa"; }
 
   void reboot() override { rp2040.reboot(); }

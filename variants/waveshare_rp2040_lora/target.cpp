@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <helpers/ArduinoHelpers.h>
+#include <helpers/sensors/EnvironmentSensorManager.h>
 
 WaveshareBoard board;
 
@@ -10,7 +11,11 @@ WRAPPER_CLASS radio_driver(radio, board);
 
 VolatileRTCClock fallback_clock;
 AutoDiscoverRTCClock rtc_clock(fallback_clock);
-SensorManager sensors;
+#ifdef ENV_INCLUDE_INA219
+  EnvironmentSensorManager sensors;
+#else
+  SensorManager sensors;
+#endif
 
 bool radio_init() {
   rtc_clock.begin(Wire);
@@ -24,8 +29,7 @@ bool radio_init() {
 
   SPI1.begin(false);
 
-  //passing NULL skips init of SPI
-  return radio.std_init(NULL);
+  return radio.std_init(NULL); //We already setup SPI
 }
 
 uint32_t radio_get_rng_seed() {
