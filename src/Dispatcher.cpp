@@ -5,13 +5,17 @@
 #endif
 
 #include <math.h>
+#include <target.h>
 
 namespace mesh {
 
 #define MAX_RX_DELAY_MILLIS   32000  // 32 seconds
-
 #ifndef NOISE_FLOOR_CALIB_INTERVAL
-  #define NOISE_FLOOR_CALIB_INTERVAL   2000     // 2 seconds
+#define NOISE_FLOOR_CALIB_INTERVAL   2000     // 2 seconds
+#endif
+
+#ifndef MAX_NO_RX_INTERVAL
+  #define MAX_NO_RX_INTERVAL 60000 * 65 //This should be long
 #endif
 
 void Dispatcher::begin() {
@@ -19,6 +23,7 @@ void Dispatcher::begin() {
   n_recv_flood = n_recv_direct = 0;
   _err_flags = 0;
   radio_nonrx_start = _ms->getMillis();
+  radio_norx_pkt = _ms->getMillis();
 
   _radio->begin();
   prev_isrecv_mode = _radio->isInRecvMode();
@@ -54,8 +59,19 @@ void Dispatcher::loop() {
       radio_nonrx_start = _ms->getMillis();
     }
   }
+
   if (!is_recv && _ms->getMillis() - radio_nonrx_start > 8000) {   // radio has not been in Rx mode for 8 seconds!
     _err_flags |= ERR_EVENT_STARTRX_TIMEOUT;
+    //reboot node
+    board.reboot();
+  }
+  
+  //This is to prevent the repeater from being unreachable due to a misconfiged radio.
+  //And happens during brownouts when batterty is getting changed back up from a dead state.
+  if (_ms->getMillis() - radio_norx_pkt > MAX_NO_RX_INTERVAL) {   // Radio has not rx a packet for to long!
+    _err_flags |= ERR_EVENT_RXPACKET_TIMEOUT;
+    //reboot node
+    board.reboot();
   }
 
   if (outbound) {  // waiting for outbound send to be completed
@@ -206,6 +222,7 @@ void Dispatcher::checkRecv() {
       n_recv_direct++;
       processRecvPacket(pkt);
     }
+    radio_norx_pkt = _ms->getMillis();
   }
 }
 

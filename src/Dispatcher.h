@@ -107,6 +107,7 @@ typedef uint32_t  DispatcherAction;
 #define ERR_EVENT_FULL              (1 << 0)
 #define ERR_EVENT_CAD_TIMEOUT       (1 << 1)
 #define ERR_EVENT_STARTRX_TIMEOUT   (1 << 2)
+#define ERR_EVENT_RXPACKET_TIMEOUT   (1 << 3)
 
 /**
  * \brief  The low-level task that manages detecting incoming Packets, and the queueing
@@ -118,6 +119,7 @@ class Dispatcher {
   unsigned long next_tx_time;
   unsigned long cad_busy_start;
   unsigned long radio_nonrx_start;
+  unsigned long radio_norx_pkt;
   unsigned long next_floor_calib_time, next_agc_reset_time;
   bool  prev_isrecv_mode;
   uint32_t n_sent_flood, n_sent_direct;
@@ -141,6 +143,7 @@ protected:
     next_floor_calib_time = next_agc_reset_time = 0;
     _err_flags = 0;
     radio_nonrx_start = 0;
+    radio_norx_pkt = 0;
     prev_isrecv_mode = true;
   }
 
