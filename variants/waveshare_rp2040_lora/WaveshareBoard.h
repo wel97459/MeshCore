@@ -30,7 +30,9 @@ protected:
 
 public:
   void begin();
+  void loop();
   uint8_t getStartupReason() const override { return startup_reason; }
+  
 
 #ifdef P_LORA_TX_LED
   void onBeforeTransmit() override { digitalWrite(P_LORA_TX_LED, HIGH); }

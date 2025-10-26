@@ -15,6 +15,10 @@ void WaveshareBoard::begin() {
   pinMode(PIN_VBAT_READ, INPUT);
 #endif
 
+#ifdef USE_WDT
+  rp2040.wdt_begin(8000);
+#endif
+
 #if defined(PIN_BOARD_SDA) && defined(PIN_BOARD_SCL)
   Wire.setSDA(PIN_BOARD_SDA);
   Wire.setSCL(PIN_BOARD_SCL);
@@ -23,6 +27,12 @@ void WaveshareBoard::begin() {
   Wire.begin();
 
   delay(10); // give sx1262 some time to power up
+}
+
+void WaveshareBoard::loop() {
+  #ifdef USE_WDT
+    rp2040.wdt_reset();
+  #endif
 }
 
 bool WaveshareBoard::startOTAUpdate(const char *id, char reply[]) {
