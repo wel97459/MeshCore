@@ -1,7 +1,8 @@
 #include <Arduino.h>
 #include "target.h"
 #include <helpers/ArduinoHelpers.h>
-#include <helpers/sensors/MicroNMEALocationProvider.h>
+//#include <helpers/sensors/MicroNMEALocationProvider.h>
+#include <helpers/sensors/EnvironmentSensorManager.h>
 
 MeshSolarBoard board;
 
@@ -11,8 +12,13 @@ WRAPPER_CLASS radio_driver(radio, board);
 
 VolatileRTCClock fallback_clock;
 AutoDiscoverRTCClock rtc_clock(fallback_clock);
-MicroNMEALocationProvider nmea = MicroNMEALocationProvider(Serial1);
-SolarSensorManager sensors = SolarSensorManager(nmea);
+// MicroNMEALocationProvider nmea = MicroNMEALocationProvider(Serial1);
+// SolarSensorManager sensors = SolarSensorManager(nmea);
+#ifdef ENV_INCLUDE_INA219
+  EnvironmentSensorManager sensors;
+#else
+  SensorManager sensors;
+#endif
 
 #ifdef DISPLAY_CLASS
   DISPLAY_CLASS display;
@@ -43,81 +49,81 @@ mesh::LocalIdentity radio_new_identity() {
   return mesh::LocalIdentity(&rng);  // create new random identity
 }
 
-void SolarSensorManager::start_gps() {
-  if (!gps_active) {
-    gps_active = true;
-    _location->begin();
-  }
-}
+// void SolarSensorManager::start_gps() {
+//   if (!gps_active) {
+//     gps_active = true;
+//     _location->begin();
+//   }
+// }
 
-void SolarSensorManager::stop_gps() {
-  if (gps_active) {
-    gps_active = false;
-    _location->stop();
-  }
-}
+// void SolarSensorManager::stop_gps() {
+//   if (gps_active) {
+//     gps_active = false;
+//     _location->stop();
+//   }
+// }
 
-bool SolarSensorManager::begin() {
-  Serial1.begin(9600);
+// bool SolarSensorManager::begin() {
+//   Serial1.begin(9600);
 
-  // We'll consider GPS detected if we see any data on Serial1
-  gps_detected = (Serial1.available() > 0);
+//   // We'll consider GPS detected if we see any data on Serial1
+//   gps_detected = (Serial1.available() > 0);
 
-  if (gps_detected) {
-    MESH_DEBUG_PRINTLN("GPS detected");
-  } else {
-    MESH_DEBUG_PRINTLN("No GPS detected");
-  }
+//   if (gps_detected) {
+//     MESH_DEBUG_PRINTLN("GPS detected");
+//   } else {
+//     MESH_DEBUG_PRINTLN("No GPS detected");
+//   }
 
-  return true;
-}
+//   return true;
+// }
 
-bool SolarSensorManager::querySensors(uint8_t requester_permissions, CayenneLPP& telemetry) {
-  if (requester_permissions & TELEM_PERM_LOCATION) {   // does requester have permission?
-    telemetry.addGPS(TELEM_CHANNEL_SELF, node_lat, node_lon, node_altitude);
-  }
-  return true;
-}
+// bool SolarSensorManager::querySensors(uint8_t requester_permissions, CayenneLPP& telemetry) {
+//   if (requester_permissions & TELEM_PERM_LOCATION) {   // does requester have permission?
+//     telemetry.addGPS(TELEM_CHANNEL_SELF, node_lat, node_lon, node_altitude);
+//   }
+//   return true;
+// }
 
-void SolarSensorManager::loop() {
-  static long next_gps_update = 0;
+// void SolarSensorManager::loop() {
+//   static long next_gps_update = 0;
 
-  _location->loop();
+//   _location->loop();
 
-  if (millis() > next_gps_update) {
-    if (_location->isValid()) {
-      node_lat = ((double)_location->getLatitude())/1000000.;
-      node_lon = ((double)_location->getLongitude())/1000000.;
-      node_altitude = ((double)_location->getAltitude()) / 1000.0;
-      MESH_DEBUG_PRINTLN("lat %f lon %f", node_lat, node_lon);
-    }
-    next_gps_update = millis() + 1000;
-  }
-}
+//   if (millis() > next_gps_update) {
+//     if (_location->isValid()) {
+//       node_lat = ((double)_location->getLatitude())/1000000.;
+//       node_lon = ((double)_location->getLongitude())/1000000.;
+//       node_altitude = ((double)_location->getAltitude()) / 1000.0;
+//       MESH_DEBUG_PRINTLN("lat %f lon %f", node_lat, node_lon);
+//     }
+//     next_gps_update = millis() + 1000;
+//   }
+// }
 
-int SolarSensorManager::getNumSettings() const {
-  return gps_detected ? 1 : 0;  // only show GPS setting if GPS is detected
-}
+// int SolarSensorManager::getNumSettings() const {
+//   return gps_detected ? 1 : 0;  // only show GPS setting if GPS is detected
+// }
 
-const char* SolarSensorManager::getSettingName(int i) const {
-  return (gps_detected && i == 0) ? "gps" : NULL;
-}
+// const char* SolarSensorManager::getSettingName(int i) const {
+//   return (gps_detected && i == 0) ? "gps" : NULL;
+// }
 
-const char* SolarSensorManager::getSettingValue(int i) const {
-  if (gps_detected && i == 0) {
-    return gps_active ? "1" : "0";
-  }
-  return NULL;
-}
+// const char* SolarSensorManager::getSettingValue(int i) const {
+//   if (gps_detected && i == 0) {
+//     return gps_active ? "1" : "0";
+//   }
+//   return NULL;
+// }
 
-bool SolarSensorManager::setSettingValue(const char* name, const char* value) {
-  if (gps_detected && strcmp(name, "gps") == 0) {
-    if (strcmp(value, "0") == 0) {
-      stop_gps();
-    } else {
-      start_gps();
-    }
-    return true;
-  }
-  return false;  // not supported
-}
+// bool SolarSensorManager::setSettingValue(const char* name, const char* value) {
+//   if (gps_detected && strcmp(name, "gps") == 0) {
+//     if (strcmp(value, "0") == 0) {
+//       stop_gps();
+//     } else {
+//       start_gps();
+//     }
+//     return true;
+//   }
+//   return false;  // not supported
+// }

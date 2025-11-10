@@ -3,6 +3,9 @@
 #include <MeshCore.h>
 #include <Arduino.h>
 
+#include <nrf.h>
+#include <nrf_temp.h>
+
 #ifdef HELTEC_MESH_SOLAR
 #include "meshSolarApp.h"
 #endif
@@ -18,7 +21,8 @@
 
 #define SX126X_DIO2_AS_RF_SWITCH  true
 #define SX126X_DIO3_TCXO_VOLTAGE   1.8
-
+#include <nrf.h>
+#include <nrf_temp.h>
 
 class MeshSolarBoard : public mesh::MainBoard {
 protected:
@@ -26,6 +30,7 @@ protected:
 
 public:
   void begin();
+  void loop();
   uint8_t getStartupReason() const override { return startup_reason; }
 
   uint16_t getBattMilliVolts() override {
@@ -41,4 +46,9 @@ public:
   }
 
   bool startOTAUpdate(const char* id, char reply[]) override;
+
+  float getInternalTemp() override {
+  //return analogReadTemp();
+  return 0;
+  }
 };

@@ -33,6 +33,9 @@ void MeshSolarBoard::begin() {
   Wire.begin();
 }
 
+void MeshSolarBoard::loop() {
+}
+
 bool MeshSolarBoard::startOTAUpdate(const char* id, char reply[]) {
   // Config the peripheral connection with maximum bandwidth
   // more SRAM required by SoftDevice
