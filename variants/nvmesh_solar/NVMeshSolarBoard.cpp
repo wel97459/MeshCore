@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "MeshSolarBoard.h"
+#include "NVMeshSolarBoard.h"
 
 #include <bluefruit.h>
 #include <Wire.h>
@@ -20,24 +20,26 @@ static void disconnect_callback(uint16_t conn_handle, uint8_t reason)
   MESH_DEBUG_PRINTLN("BLE client disconnected");
 }
 
-void MeshSolarBoard::begin() {
+void NVMeshSolarBoard::begin() {
   // for future use, sub-classes SHOULD call this from their begin()
   startup_reason = BD_STARTUP_NORMAL;
   #ifdef HELTEC_MESH_SOLAR
     meshSolarStart();
   #endif
-
-#if defined(PIN_BOARD_SDA) && defined(PIN_BOARD_SCL)
-  Wire.setPins(PIN_BOARD_SDA, PIN_BOARD_SCL);
-#endif
+  #ifdef P_LORA_TX_LED
+    pinMode(P_LORA_TX_LED, OUTPUT);
+  #endif
+  #if defined(PIN_BOARD_SDA) && defined(PIN_BOARD_SCL)
+    Wire.setPins(PIN_BOARD_SDA, PIN_BOARD_SCL);
+  #endif
 
   Wire.begin();
 }
 
-void MeshSolarBoard::loop() {
+void NVMeshSolarBoard::loop() {
 }
 
-bool MeshSolarBoard::startOTAUpdate(const char* id, char reply[]) {
+bool NVMeshSolarBoard::startOTAUpdate(const char* id, char reply[]) {
   // Config the peripheral connection with maximum bandwidth
   // more SRAM required by SoftDevice
   // Note: All config***() function must be called before begin()

@@ -6,10 +6,6 @@
 #include <nrf.h>
 #include <nrf_temp.h>
 
-#ifdef HELTEC_MESH_SOLAR
-#include "meshSolarApp.h"
-#endif
-
 // LoRa radio module pins for Heltec T114
 #define  P_LORA_DIO_1     20
 #define  P_LORA_NSS       24
@@ -24,7 +20,7 @@
 #include <nrf.h>
 #include <nrf_temp.h>
 
-class MeshSolarBoard : public mesh::MainBoard {
+class NVMeshSolarBoard : public mesh::MainBoard {
 protected:
   uint8_t startup_reason;
 
@@ -40,6 +36,11 @@ public:
       return 0;
     #endif
   }
+
+  #ifdef P_LORA_TX_LED
+    void onBeforeTransmit() override { digitalWrite(P_LORA_TX_LED, HIGH); }
+    void onAfterTransmit() override { digitalWrite(P_LORA_TX_LED, LOW); }
+  #endif
 
   const char* getManufacturerName() const override {
     return "Heltec Mesh Solar";
