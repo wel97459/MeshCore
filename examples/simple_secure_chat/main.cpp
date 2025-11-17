@@ -534,12 +534,13 @@ SimpleMeshTables tables;
 MyMesh the_mesh(radio_driver, fast_rng, rtc_clock, tables);
 
 void halt() {
-  while (1) ;
+  delay(10000);
+  board.reboot();
 }
 
 void setup() {
   Serial.begin(115200);
-
+  delay(5000);
   board.begin();
 
   if (!radio_init()) { halt(); }
