@@ -34,6 +34,7 @@ protected:
 
 public:
   void begin();
+  void loop();
   uint8_t getStartupReason() const override { return startup_reason; }
 
   #define BATTERY_SAMPLES 8
@@ -48,6 +49,10 @@ public:
     raw = raw / BATTERY_SAMPLES;
 
     return (ADC_MULTIPLIER * raw) / 4096;
+  }
+
+  float getInternalTemp() override {
+    return 0;
   }
 
   const char* getManufacturerName() const override {

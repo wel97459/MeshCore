@@ -40,7 +40,8 @@ void RAK4631Board::begin() {
   digitalWrite(SX126X_POWER_EN, HIGH);
   delay(10);   // give sx1262 some time to power up
 }
-
+void RAK4631Board::loop() {
+}
 bool RAK4631Board::startOTAUpdate(const char* id, char reply[]) {
   // Config the peripheral connection with maximum bandwidth
   // more SRAM required by SoftDevice
