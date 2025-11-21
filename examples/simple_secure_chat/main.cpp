@@ -540,7 +540,7 @@ void halt() {
 
 void setup() {
   Serial.begin(115200);
-  delay(5000);
+  
   board.begin();
 
   if (!radio_init()) { halt(); }

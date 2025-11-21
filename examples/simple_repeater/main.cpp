@@ -22,9 +22,11 @@ static char command[160];
 
 void setup() {
   Serial.begin(115200);
-  delay(1000);
-
   board.begin();
+
+  board.onBeforeTransmit();
+  delay(1000);
+  board.onAfterTransmit();
 
 #ifdef DISPLAY_CLASS
   if (display.begin()) {
