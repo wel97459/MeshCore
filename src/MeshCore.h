@@ -46,6 +46,8 @@ public:
   virtual float getInternalTemp() = 0;
   virtual void setAdcMultiplier(float multiplier) {};
   virtual float getAdcMultiplier() const { return 1.0f; }
+  virtual bool setAdcMultiplier(float multiplier) { return false; };
+  virtual float getAdcMultiplier() const { return 0.0f; }
   virtual const char* getManufacturerName() const = 0;
   virtual void onBeforeTransmit() { }
   virtual void onAfterTransmit() { }
