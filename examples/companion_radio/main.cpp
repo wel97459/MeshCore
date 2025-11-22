@@ -101,8 +101,16 @@ MyMesh the_mesh(radio_driver, fast_rng, rtc_clock, tables, store
 
 /* END GLOBAL OBJECTS */
 
-void halt() {
-  delay(10000);
+void delayedReboot(DisplayDriver* disp, const char *msg, const unsigned long delayms) {
+  #ifdef DISPLAY_CLASS
+    char tmp[32];
+    sprintf(tmp, "Rebooting in %3.1fs", delayms/1000.0);
+    disp->startFrame();
+    disp->drawTextCentered(disp->width() / 2, 24, msg);
+    disp->drawTextCentered(disp->width() / 2, 32, tmp);
+    disp->endFrame();
+  #endif
+  delay(delayms);
   board.reboot();
 }
 
@@ -123,7 +131,13 @@ void setup() {
   }
 #endif
 
-  if (!radio_init()) { halt(); }
+  if (!radio_init()) {
+    #ifdef DISPLAY_CLASS
+      delayedReboot(disp, "Radio Init Failed!", 5000);
+    #else
+      delayedReboot(NULL, NULL, 5000);
+    #endif
+  }
 
   fast_rng.begin(radio_get_rng_seed());
 
