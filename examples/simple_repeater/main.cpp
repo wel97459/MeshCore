@@ -21,8 +21,16 @@ void delayedReboot(DisplayDriver* disp, const char *msg, const unsigned long del
     disp->drawTextCentered(disp->width() / 2, 24, msg);
     disp->drawTextCentered(disp->width() / 2, 32, tmp);
     disp->endFrame();
+    delay(delayms);
+  #else
+    for(int8_t i = 0; i < delayms/1000; i++){
+      delay(500);
+      board.onBeforeTransmit();
+      delay(500);
+      board.onAfterTransmit();
+    }
   #endif
-  delay(delayms);
+
   board.reboot();
 }
 
