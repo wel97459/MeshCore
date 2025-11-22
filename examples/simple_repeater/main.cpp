@@ -21,6 +21,7 @@ void delayedReboot(DisplayDriver* disp, const char *msg, const unsigned long del
     disp->drawTextCentered(disp->width() / 2, 24, msg);
     disp->drawTextCentered(disp->width() / 2, 32, tmp);
     disp->endFrame();
+<<<<<<< HEAD
     delay(delayms);
   #else
     for(int8_t i = 0; i < delayms/1000; i++){
@@ -31,6 +32,10 @@ void delayedReboot(DisplayDriver* disp, const char *msg, const unsigned long del
     }
   #endif
 
+=======
+  #endif
+  delay(delayms);
+>>>>>>> 5959b0d (Removed halt and added delayedReboot)
   board.reboot();
 }
 
@@ -57,7 +62,11 @@ void setup() {
     #ifdef DISPLAY_CLASS
       delayedReboot(disp, "Radio Init Failed!", 5000);
     #else
+<<<<<<< HEAD
       delayedReboot(NULL, NULL, 5000);
+=======
+      delayedReboot(NULL, "", 5000);
+>>>>>>> 5959b0d (Removed halt and added delayedReboot)
     #endif
   }
 
