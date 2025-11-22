@@ -13,15 +13,15 @@ SimpleMeshTables tables;
 
 MyMesh the_mesh(board, radio_driver, *new ArduinoMillis(), fast_rng, rtc_clock, tables);
 
-void delayedReboot(DisplayDriver* disp, const char *msg, const unsigned long delayms) {
+void delayedReboot(void *d, const char *msg, const uint32_t delayms) {
   #ifdef DISPLAY_CLASS
+    DisplayDriver* disp = (DisplayDriver*)d;
     char tmp[32];
     sprintf(tmp, "Rebooting in %3.1fs", delayms/1000.0);
     disp->startFrame();
     disp->drawTextCentered(disp->width() / 2, 24, msg);
     disp->drawTextCentered(disp->width() / 2, 32, tmp);
     disp->endFrame();
-<<<<<<< HEAD
     delay(delayms);
   #else
     for(int8_t i = 0; i < delayms/1000; i++){
@@ -32,10 +32,6 @@ void delayedReboot(DisplayDriver* disp, const char *msg, const unsigned long del
     }
   #endif
 
-=======
-  #endif
-  delay(delayms);
->>>>>>> 5959b0d (Removed halt and added delayedReboot)
   board.reboot();
 }
 
@@ -60,13 +56,9 @@ void setup() {
 
   if (!radio_init()) {
     #ifdef DISPLAY_CLASS
-      delayedReboot(disp, "Radio Init Failed!", 5000);
+      delayedReboot(&display, "Radio Init Failed!", 5000);
     #else
-<<<<<<< HEAD
-      delayedReboot(NULL, NULL, 5000);
-=======
       delayedReboot(NULL, "", 5000);
->>>>>>> 5959b0d (Removed halt and added delayedReboot)
     #endif
   }
 

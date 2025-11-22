@@ -555,11 +555,7 @@ void setup() {
     #ifdef DISPLAY_CLASS
       delayedReboot(disp, "Radio Init Failed!", 5000);
     #else
-<<<<<<< HEAD
-      delayedReboot(NULL, NULL, 5000);
-=======
       delayedReboot(NULL, "", 5000);
->>>>>>> 5959b0d (Removed halt and added delayedReboot)
     #endif
   }
 

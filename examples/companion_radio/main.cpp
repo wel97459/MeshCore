@@ -101,8 +101,9 @@ MyMesh the_mesh(radio_driver, fast_rng, rtc_clock, tables, store
 
 /* END GLOBAL OBJECTS */
 
-void delayedReboot(DisplayDriver* disp, const char *msg, const unsigned long delayms) {
+void delayedReboot(void* d, const char *msg, const unsigned long delayms) {
   #ifdef DISPLAY_CLASS
+    DisplayDriver* disp = (DisplayDriver*)d;
     char tmp[32];
     sprintf(tmp, "Rebooting in %3.1fs", delayms/1000.0);
     disp->startFrame();
@@ -135,11 +136,7 @@ void setup() {
     #ifdef DISPLAY_CLASS
       delayedReboot(disp, "Radio Init Failed!", 5000);
     #else
-<<<<<<< HEAD
-      delayedReboot(NULL, NULL, 5000);
-=======
       delayedReboot(NULL, "", 5000);
->>>>>>> 5959b0d (Removed halt and added delayedReboot)
     #endif
   }
 
