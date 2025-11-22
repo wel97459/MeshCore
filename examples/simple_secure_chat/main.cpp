@@ -533,8 +533,9 @@ StdRNG fast_rng;
 SimpleMeshTables tables;
 MyMesh the_mesh(radio_driver, fast_rng, rtc_clock, tables);
 
-void delayedReboot(DisplayDriver* disp, const char *msg, const unsigned long delayms) {
+void delayedReboot(void *d, const char *msg, const uint32_t delayms) {
   #ifdef DISPLAY_CLASS
+    DisplayDriver* disp = (DisplayDriver*)d;
     char tmp[32];
     sprintf(tmp, "Rebooting in %3.1fs", delayms/1000.0);
     disp->startFrame();

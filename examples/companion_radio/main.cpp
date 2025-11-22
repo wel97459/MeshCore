@@ -101,7 +101,7 @@ MyMesh the_mesh(radio_driver, fast_rng, rtc_clock, tables, store
 
 /* END GLOBAL OBJECTS */
 
-void delayedReboot(void* d, const char *msg, const unsigned long delayms) {
+void delayedReboot(void *d, const char *msg, const uint32_t delayms) {
   #ifdef DISPLAY_CLASS
     DisplayDriver* disp = (DisplayDriver*)d;
     char tmp[32];
