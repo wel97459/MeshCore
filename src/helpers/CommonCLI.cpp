@@ -69,7 +69,9 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
     file.read((uint8_t *)&_prefs->gps_enabled, sizeof(_prefs->gps_enabled));                       // 156
     file.read((uint8_t *)&_prefs->gps_interval, sizeof(_prefs->gps_interval));                     // 157
     file.read((uint8_t *)&_prefs->advert_loc_policy, sizeof (_prefs->advert_loc_policy));          // 161
-    // 162
+    file.read((uint8_t *)&_prefs->discovery_mod_timestamp, sizeof(_prefs->discovery_mod_timestamp)); // 162
+    file.read((uint8_t *)&_prefs->adc_multiplier, sizeof(_prefs->adc_multiplier)); // 166
+    // 170
 
     // sanitise bad pref values
     _prefs->rx_delay_base = constrain(_prefs->rx_delay_base, 0, 20.0f);
@@ -77,11 +79,12 @@ void CommonCLI::loadPrefsInt(FILESYSTEM* fs, const char* filename) {
     _prefs->direct_tx_delay_factor = constrain(_prefs->direct_tx_delay_factor, 0, 2.0f);
     _prefs->airtime_factor = constrain(_prefs->airtime_factor, 0, 9.0f);
     _prefs->freq = constrain(_prefs->freq, 400.0f, 2500.0f);
-    _prefs->bw = constrain(_prefs->bw, 62.5f, 500.0f);
-    _prefs->sf = constrain(_prefs->sf, 7, 12);
+    _prefs->bw = constrain(_prefs->bw, 7.8f, 500.0f);
+    _prefs->sf = constrain(_prefs->sf, 5, 12);
     _prefs->cr = constrain(_prefs->cr, 5, 8);
     _prefs->tx_power_dbm = constrain(_prefs->tx_power_dbm, 1, 30);
     _prefs->multi_acks = constrain(_prefs->multi_acks, 0, 1);
+    _prefs->adc_multiplier = constrain(_prefs->adc_multiplier, 0.0f, 10.0f);
 
     // sanitise bad bridge pref values
     _prefs->bridge_enabled = constrain(_prefs->bridge_enabled, 0, 1);
@@ -146,7 +149,9 @@ void CommonCLI::savePrefs(FILESYSTEM* fs) {
     file.write((uint8_t *)&_prefs->gps_enabled, sizeof(_prefs->gps_enabled));                       // 156
     file.write((uint8_t *)&_prefs->gps_interval, sizeof(_prefs->gps_interval));                     // 157
     file.write((uint8_t *)&_prefs->advert_loc_policy, sizeof(_prefs->advert_loc_policy));           // 161
-    // 162
+    file.write((uint8_t *)&_prefs->discovery_mod_timestamp, sizeof(_prefs->discovery_mod_timestamp)); // 162
+    file.write((uint8_t *)&_prefs->adc_multiplier, sizeof(_prefs->adc_multiplier));                 // 166
+    // 170
 
     file.close();
   }
@@ -226,12 +231,12 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
       strcpy(tmp, &command[10]);
       const char *parts[5];
       int num = mesh::Utils::parseTextParts(tmp, parts, 5);
-      float freq  = num > 0 ? atof(parts[0]) : 0.0f;
-      float bw    = num > 1 ? atof(parts[1]) : 0.0f;
+      float freq  = num > 0 ? strtof(parts[0], nullptr) : 0.0f;
+      float bw    = num > 1 ? strtof(parts[1], nullptr) : 0.0f;
       uint8_t sf  = num > 2 ? atoi(parts[2]) : 0;
       uint8_t cr  = num > 3 ? atoi(parts[3]) : 0;
       int temp_timeout_mins  = num > 4 ? atoi(parts[4]) : 0;
-      if (freq >= 300.0f && freq <= 2500.0f && sf >= 7 && sf <= 12 && cr >= 5 && cr <= 8 && bw >= 7.0f && bw <= 500.0f && temp_timeout_mins > 0) {
+      if (freq >= 300.0f && freq <= 2500.0f && sf >= 5 && sf <= 12 && cr >= 5 && cr <= 8 && bw >= 7.0f && bw <= 500.0f && temp_timeout_mins > 0) {
         _callbacks->applyTempRadioParams(freq, bw, sf, cr, temp_timeout_mins);
         sprintf(reply, "OK - temp params for %d mins", temp_timeout_mins);
       } else {
@@ -282,7 +287,7 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
       } else if (memcmp(config, "radio", 5) == 0) {
         char freq[16], bw[16];
         strcpy(freq, StrHelper::ftoa(_prefs->freq));
-        strcpy(bw, StrHelper::ftoa(_prefs->bw));
+        strcpy(bw, StrHelper::ftoa3(_prefs->bw));
         sprintf(reply, "> %s,%s,%d,%d", freq, bw, (uint32_t)_prefs->sf, (uint32_t)_prefs->cr);
       } else if (memcmp(config, "rxdelay", 7) == 0) {
         sprintf(reply, "> %s", StrHelper::ftoa(_prefs->rx_delay_base));
@@ -329,6 +334,13 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
       } else if (memcmp(config, "bridge.secret", 13) == 0) {
         sprintf(reply, "> %s", _prefs->bridge_secret);
 #endif
+      } else if (memcmp(config, "adc.multiplier", 14) == 0) {
+        float adc_mult = _board->getAdcMultiplier();
+        if (adc_mult == 0.0f) {
+          strcpy(reply, "Error: unsupported by this board");
+        } else {
+          sprintf(reply, "> %.3f", adc_mult);
+        }
       } else {
         sprintf(reply, "??: %s", config);
       }
@@ -405,11 +417,11 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         strcpy(tmp, &config[6]);
         const char *parts[4];
         int num = mesh::Utils::parseTextParts(tmp, parts, 4);
-        float freq  = num > 0 ? atof(parts[0]) : 0.0f;
-        float bw    = num > 1 ? atof(parts[1]) : 0.0f;
+        float freq  = num > 0 ? strtof(parts[0], nullptr) : 0.0f;
+        float bw    = num > 1 ? strtof(parts[1], nullptr) : 0.0f;
         uint8_t sf  = num > 2 ? atoi(parts[2]) : 0;
         uint8_t cr  = num > 3 ? atoi(parts[3]) : 0;
-        if (freq >= 300.0f && freq <= 2500.0f && sf >= 7 && sf <= 12 && cr >= 5 && cr <= 8 && bw >= 7.0f && bw <= 500.0f) {
+        if (freq >= 300.0f && freq <= 2500.0f && sf >= 5 && sf <= 12 && cr >= 5 && cr <= 8 && bw >= 7.0f && bw <= 500.0f) {
           _prefs->sf = sf;
           _prefs->cr = cr;
           _prefs->freq = freq;
@@ -521,6 +533,19 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         savePrefs();
         strcpy(reply, "OK");
 #endif
+      } else if (memcmp(config, "adc.multiplier ", 15) == 0) {
+        _prefs->adc_multiplier = atof(&config[15]);
+        if (_board->setAdcMultiplier(_prefs->adc_multiplier)) {
+          savePrefs();
+          if (_prefs->adc_multiplier == 0.0f) {
+            strcpy(reply, "OK - using default board multiplier");
+          } else {
+            sprintf(reply, "OK - multiplier set to %.3f", _prefs->adc_multiplier);
+          }
+        } else {
+          _prefs->adc_multiplier = 0.0f;
+          strcpy(reply, "Error: unsupported by this board");
+        };
       } else {
         sprintf(reply, "unknown config: %s", config);
       }
@@ -545,7 +570,7 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
       int num = mesh::Utils::parseTextParts(tmp, parts, 2, ' ');
       const char *key = (num > 0) ? parts[0] : "";
       const char *value = (num > 1) ? parts[1] : "null";
-      if (_sensors->setSettingByKey(key, value)) {
+      if (_sensors->setSettingValue(key, value)) {
         strcpy(reply, "ok");
       } else {
         strcpy(reply, "can't find custom var");
@@ -577,7 +602,7 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
       }
 #if ENV_INCLUDE_GPS == 1
     } else if (memcmp(command, "gps on", 6) == 0) {
-      if (_sensors->setSettingByKey("gps", "1")) {
+      if (_sensors->setSettingValue("gps", "1")) {
         _prefs->gps_enabled = 1;
         savePrefs();
         strcpy(reply, "ok");
@@ -585,7 +610,7 @@ void CommonCLI::handleCommand(uint32_t sender_timestamp, const char* command, ch
         strcpy(reply, "gps toggle not found");
       }
     } else if (memcmp(command, "gps off", 7) == 0) {
-      if (_sensors->setSettingByKey("gps", "0")) {
+      if (_sensors->setSettingValue("gps", "0")) {
         _prefs->gps_enabled = 0;
         savePrefs();
         strcpy(reply, "ok");

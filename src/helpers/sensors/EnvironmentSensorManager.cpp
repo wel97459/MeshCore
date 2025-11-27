@@ -15,6 +15,12 @@
 static Adafruit_BME680 BME680;
 #endif
 
+#ifdef ENV_INCLUDE_BMP085
+#define TELEM_BMP085_SEALEVELPRESSURE_HPA (1013.25)
+#include <Adafruit_BMP085.h>
+static Adafruit_BMP085 BMP085;
+#endif
+
 #if ENV_INCLUDE_AHTX0
 #define TELEM_AHTX_ADDRESS      0x38      // AHT10, AHT20 temperature and humidity sensor I2C address
 #include <Adafruit_AHTX0.h>
@@ -172,6 +178,16 @@ bool EnvironmentSensorManager::begin() {
   }
   #endif
 
+  #if ENV_INCLUDE_BME680
+  if (BME680.begin(TELEM_BME680_ADDRESS, TELEM_WIRE)) {
+    MESH_DEBUG_PRINTLN("Found BME680 at address: %02X", TELEM_BME680_ADDRESS);
+    BME680_initialized = true;
+  } else {
+    BME680_initialized = false;
+    MESH_DEBUG_PRINTLN("BME680 was not found at I2C address %02X", TELEM_BME680_ADDRESS);
+  }
+  #endif
+
   #if ENV_INCLUDE_BME280
   if (BME280.begin(TELEM_BME280_ADDRESS, TELEM_WIRE)) {
     MESH_DEBUG_PRINTLN("Found BME280 at address: %02X", TELEM_BME280_ADDRESS);
@@ -295,13 +311,15 @@ bool EnvironmentSensorManager::begin() {
   }
   #endif
 
-  #if ENV_INCLUDE_BME680
-  if (BME680.begin(TELEM_BME680_ADDRESS, TELEM_WIRE)) {
-    MESH_DEBUG_PRINTLN("Found BME680 at address: %02X", TELEM_BME680_ADDRESS);
-    BME680_initialized = true;
+  #if ENV_INCLUDE_BMP085
+  // First argument is  MODE (aka oversampling)
+  // choose ULTRALOWPOWER
+  if (BMP085.begin(0, TELEM_WIRE)) {
+    MESH_DEBUG_PRINTLN("Found sensor BMP085");
+    BMP085_initialized = true;
   } else {
-    BME680_initialized = false;
-    MESH_DEBUG_PRINTLN("BME680 was not found at I2C address %02X", TELEM_BME680_ADDRESS);
+    BMP085_initialized = false;
+    MESH_DEBUG_PRINTLN("BMP085 was not found at I2C address %02X", 0x77);
   }
   #endif
 
@@ -323,6 +341,19 @@ bool EnvironmentSensorManager::querySensors(uint8_t requester_permissions, Cayen
       AHTX0.getEvent(&humidity, &temp);
       telemetry.addTemperature(TELEM_CHANNEL_SELF, temp.temperature);
       telemetry.addRelativeHumidity(TELEM_CHANNEL_SELF, humidity.relative_humidity);
+    }
+    #endif
+
+    #if ENV_INCLUDE_BME680
+    if (BME680_initialized) {
+      if (BME680.performReading()) {
+        telemetry.addTemperature(TELEM_CHANNEL_SELF, BME680.temperature);
+        telemetry.addRelativeHumidity(TELEM_CHANNEL_SELF, BME680.humidity);
+        telemetry.addBarometricPressure(TELEM_CHANNEL_SELF, BME680.pressure / 100);
+        telemetry.addAltitude(TELEM_CHANNEL_SELF, 44330.0 * (1.0 - pow((BME680.pressure / 100) / TELEM_BME680_SEALEVELPRESSURE_HPA, 0.1903)));
+        telemetry.addAnalogInput(next_available_channel, BME680.gas_resistance);
+        next_available_channel++;
+      }
     }
     #endif
 
@@ -434,16 +465,11 @@ bool EnvironmentSensorManager::querySensors(uint8_t requester_permissions, Cayen
     }
     #endif
 
-    #if ENV_INCLUDE_BME680
-    if (BME680_initialized) {
-      if (BME680.performReading()) {
-        telemetry.addTemperature(TELEM_CHANNEL_SELF, BME680.temperature);
-        telemetry.addRelativeHumidity(TELEM_CHANNEL_SELF, BME680.humidity);
-        telemetry.addBarometricPressure(TELEM_CHANNEL_SELF, BME680.pressure / 100);
-        telemetry.addAltitude(TELEM_CHANNEL_SELF, 44330.0 * (1.0 - pow((BME680.pressure / 100) / TELEM_BME680_SEALEVELPRESSURE_HPA, 0.1903)));
-        telemetry.addAnalogInput(next_available_channel, BME680.gas_resistance);
-        next_available_channel++;
-      }
+    #if ENV_INCLUDE_BMP085
+    if (BMP085_initialized) {
+        telemetry.addTemperature(TELEM_CHANNEL_SELF, BMP085.readTemperature());
+        telemetry.addBarometricPressure(TELEM_CHANNEL_SELF, BMP085.readPressure() / 100);
+        telemetry.addAltitude(TELEM_CHANNEL_SELF, BMP085.readAltitude(TELEM_BMP085_SEALEVELPRESSURE_HPA * 100));
     }
     #endif
 
@@ -537,7 +563,7 @@ void EnvironmentSensorManager::initBasicGPS() {
   gps_active = false; //Set GPS visibility off until setting is changed
 }
 
-// gps code for rak might be moved to MicroNMEALoactionProvider 
+// gps code for rak might be moved to MicroNMEALoactionProvider
 // or make a new location provider ...
 #ifdef RAK_WISBLOCK_GPS
 void EnvironmentSensorManager::rakGPSInit(){

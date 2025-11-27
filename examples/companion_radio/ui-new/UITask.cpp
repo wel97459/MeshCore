@@ -547,6 +547,7 @@ void UITask::begin(DisplayDriver* display, SensorManager* sensors, NodePrefs* no
 
 #ifdef PIN_BUZZER
   buzzer.begin();
+  buzzer.quiet(_node_prefs->buzzer_quiet);
 #endif
 
 #ifdef PIN_VIBRATION
@@ -636,7 +637,7 @@ void UITask::userLedHandler() {
       led_state = 0;
       next_led_change = cur_time + LED_CYCLE_MILLIS - last_led_increment;
     }
-    digitalWrite(PIN_STATUS_LED, led_state);
+    digitalWrite(PIN_STATUS_LED, led_state == LED_STATE_ON);
   }
 #endif
 }
@@ -668,6 +669,7 @@ void UITask::shutdown(bool restart){
     _board->reboot();
   } else {
     _display->turnOff();
+    radio_driver.powerOff();
     _board->powerOff();
   }
 }
@@ -717,15 +719,18 @@ void UITask::loop() {
   }
 #endif
 #if defined(PIN_USER_BTN_ANA)
-  ev = analog_btn.check();
-  if (ev == BUTTON_EVENT_CLICK) {
-    handleSingleClick(KEY_NEXT);
-  } else if (ev == BUTTON_EVENT_LONG_PRESS) {
-    handleLongPress(KEY_ENTER);
-  } else if (ev == BUTTON_EVENT_DOUBLE_CLICK) {
-    handleDoubleClick(KEY_PREV);
-  } else if (ev == BUTTON_EVENT_TRIPLE_CLICK) {
-    handleTripleClick(KEY_SELECT);
+  if (abs(millis() - _analogue_pin_read_millis) > 10) {
+    ev = analog_btn.check();
+    if (ev == BUTTON_EVENT_CLICK) {
+      c = checkDisplayOn(KEY_NEXT);
+    } else if (ev == BUTTON_EVENT_LONG_PRESS) {
+      c = handleLongPress(KEY_ENTER);
+    } else if (ev == BUTTON_EVENT_DOUBLE_CLICK) {
+      c = handleDoubleClick(KEY_PREV);
+    } else if (ev == BUTTON_EVENT_TRIPLE_CLICK) {
+      c = handleTripleClick(KEY_SELECT);
+    }
+    _analogue_pin_read_millis = millis();
   }
 #endif
 #if defined(DISP_BACKLIGHT) && defined(BACKLIGHT_BTN)
@@ -897,6 +902,8 @@ void UITask::toggleBuzzer() {
       buzzer.quiet(true);
       showAlert("Buzzer: OFF", 800);
     }
+    _node_prefs->buzzer_quiet = buzzer.isQuiet();
+    the_mesh.savePrefs();
     _next_refresh = 0;  // trigger refresh
   #endif
 }
