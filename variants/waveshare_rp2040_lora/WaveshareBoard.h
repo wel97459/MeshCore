@@ -55,7 +55,7 @@ public:
 #endif
   }
 
-  float getInternalTemp() override {
+  float getMCUTemperature() override {
     return analogReadTemp();
   }
   

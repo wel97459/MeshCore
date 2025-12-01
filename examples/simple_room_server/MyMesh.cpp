@@ -172,7 +172,7 @@ int MyMesh::handleRequest(ClientInfo *sender, uint32_t sender_timestamp, uint8_t
       #else
       telemetry.addVoltage(TELEM_CHANNEL_SELF+1, (float)board.getBattMilliVolts() / 1000.0f);
     #endif
-    telemetry.addTemperature(TELEM_CHANNEL_SELF, board.getInternalTemp());
+    telemetry.addTemperature(TELEM_CHANNEL_SELF, board.getMCUTemperature());
     // query other sensors -- target specific
     if ((sender->permissions & PERM_ACL_ROLE_MASK) == PERM_ACL_GUEST) {
       perm_mask = 0x00;  // just base telemetry allowed

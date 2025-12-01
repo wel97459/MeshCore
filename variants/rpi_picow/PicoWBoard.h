@@ -39,7 +39,7 @@ public:
     return (ADC_MULTIPLIER * raw) / 4096;
   }
 
-  float getInternalTemp() override {
+  float getMCUTemperature() override {
     return analogReadTemp();
   }
 

@@ -51,7 +51,7 @@ public:
 
   bool startOTAUpdate(const char* id, char reply[]) override;
 
-  float getInternalTemp() override {
+  float getMCUTemperature() override {
   //return analogReadTemp();
   return 0;
   }
