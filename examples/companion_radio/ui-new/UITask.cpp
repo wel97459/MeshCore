@@ -362,9 +362,9 @@ public:
     } else if (_page == HomePage::QUICK_MSG) {
       display.setColor(DisplayDriver::YELLOW);
       display.setTextSize(2);
-      display.drawTextCentered(display.width() / 2, 24, "quick messages");
+      display.drawTextCentered(display.width() / 2, 24, QUICK_MSG_STR);
       display.setTextSize(1);
-      display.drawTextCentered(display.width() / 2, 40, "enter/exit: " PRESS_LABEL);
+      display.drawTextCentered(display.width() / 2, 40, QUICK_ENTEXIT_STR PRESS_LABEL);
 #endif
     } else if (_page == HomePage::SHUTDOWN) {
       display.setColor(DisplayDriver::GREEN);

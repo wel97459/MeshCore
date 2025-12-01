@@ -20,7 +20,7 @@ QuickMsgScreen::QuickMsgScreen(UITask* task)
 int QuickMsgScreen::render(DisplayDriver& display) {
   display.setColor(DisplayDriver::YELLOW);
   display.setTextSize(2);
-  display.drawTextCentered(display.width() / 2, 2, "quick messages");
+  display.drawTextCentered(display.width() / 2, 2, "quick msg");
 
   display.setColor(DisplayDriver::GREEN);
   display.setTextSize(1);

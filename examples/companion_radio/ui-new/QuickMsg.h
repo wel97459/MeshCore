@@ -6,6 +6,14 @@
 #include <helpers/ChannelDetails.h>
 #include <helpers/ui/UIScreen.h>
 
+#ifdef ST7789
+#define QUICK_MSG_STR "quick messages"
+#define QUICK_ENTEXIT_STR "enter/exit: "
+#else
+#define QUICK_MSG_STR "quick msg"
+#define QUICK_ENTEXIT_STR "ent/exit: "
+#endif
+
 class QuickMsgScreen : public UIScreen {
   enum Row {
     MSG,
