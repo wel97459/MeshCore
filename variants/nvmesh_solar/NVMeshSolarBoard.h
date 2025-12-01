@@ -5,7 +5,10 @@
 
 #include <nrf.h>
 #include <nrf_temp.h>
+#include "nrf_gpio.h"
+#include "nrf_gpiote.h"
 
+#include <helpers/NRF52Board.h>
 // LoRa radio module pins for Heltec T114
 #define  P_LORA_DIO_1     20
 #define  P_LORA_NSS       24
@@ -17,10 +20,9 @@
 
 #define SX126X_DIO2_AS_RF_SWITCH  true
 #define SX126X_DIO3_TCXO_VOLTAGE   1.8
-#include <nrf.h>
-#include <nrf_temp.h>
 
-class NVMeshSolarBoard : public mesh::MainBoard {
+
+class NVMeshSolarBoard : public NRF52Board {
 protected:
   uint8_t startup_reason;
 
@@ -51,9 +53,4 @@ public:
   }
 
   bool startOTAUpdate(const char* id, char reply[]) override;
-
-  float getInternalTemp() override {
-  //return analogReadTemp();
-  return 0;
-  }
 };

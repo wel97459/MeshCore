@@ -3,6 +3,7 @@
 
 #include <bluefruit.h>
 #include <Wire.h>
+#include "variant.h"
 
 static BLEDfu bledfu;
 
@@ -20,9 +21,37 @@ static void disconnect_callback(uint16_t conn_handle, uint8_t reason)
   MESH_DEBUG_PRINTLN("BLE client disconnected");
 }
 
+
+void tpl5010_isr()
+{
+    digitalWrite(DONE_PIN, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(DONE_PIN, LOW);
+}
+
+void init_WDT()
+{
+    // DONE pin → normal push-pull output (NOT open-drain)
+    pinMode(DONE_PIN, OUTPUT);
+    digitalWrite(DONE_PIN, LOW);
+
+    // WAKE pin from TPL5010
+    pinMode(WAKE_PIN, INPUT_PULLDOWN);
+
+    // Attach the Arduino-style interrupt on the WAKE pin
+    // RISING = TPL5010 drives the pin HIGH to wake us
+    attachInterrupt(digitalPinToInterrupt(WAKE_PIN), tpl5010_isr, RISING);
+
+    // ───── Send initial DONE pulse to (re)start the TPL5010 timer ─────
+    digitalWrite(DONE_PIN, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(DONE_PIN, LOW);
+}
+
 void NVMeshSolarBoard::begin() {
   // for future use, sub-classes SHOULD call this from their begin()
   startup_reason = BD_STARTUP_NORMAL;
+
   #ifdef HELTEC_MESH_SOLAR
     meshSolarStart();
   #endif
@@ -32,6 +61,8 @@ void NVMeshSolarBoard::begin() {
   #if defined(PIN_BOARD_SDA) && defined(PIN_BOARD_SCL)
     Wire.setPins(PIN_BOARD_SDA, PIN_BOARD_SCL);
   #endif
+
+  init_WDT();
 
   Wire.begin();
 }
