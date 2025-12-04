@@ -67,9 +67,6 @@ void NVMeshSolarBoard::begin() {
   Wire.begin();
 }
 
-void NVMeshSolarBoard::loop() {
-}
-
 bool NVMeshSolarBoard::startOTAUpdate(const char* id, char reply[]) {
   // Config the peripheral connection with maximum bandwidth
   // more SRAM required by SoftDevice

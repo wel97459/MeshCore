@@ -1,6 +1,5 @@
 #pragma once
 
-#include <MeshCore.h>
 #include <Arduino.h>
 
 #include <nrf.h>
@@ -28,7 +27,6 @@ protected:
 
 public:
   void begin();
-  void loop();
   uint8_t getStartupReason() const override { return startup_reason; }
 
   uint16_t getBattMilliVolts() override {
@@ -38,11 +36,6 @@ public:
       return 0;
     #endif
   }
-
-  #ifdef P_LORA_TX_LED
-    void onBeforeTransmit() override { digitalWrite(P_LORA_TX_LED, HIGH); }
-    void onAfterTransmit() override { digitalWrite(P_LORA_TX_LED, LOW); }
-  #endif
 
   const char* getManufacturerName() const override {
     return "Heltec Mesh Solar";
