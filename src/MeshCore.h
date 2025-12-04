@@ -42,6 +42,7 @@ namespace mesh {
 
 class MainBoard {
 public:
+  virtual void loop() {}
   virtual uint16_t getBattMilliVolts() = 0;
   virtual float getMCUTemperature() {return -273.15;};
   virtual bool setAdcMultiplier(float multiplier) { return false; };
