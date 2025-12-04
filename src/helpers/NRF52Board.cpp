@@ -14,4 +14,19 @@ float NRF52Board::getMCUTemperature() {
   return temp * 0.25f; // Convert to °C
 }
 
+uint16_t NRF52Board::getBattMilliVolts() {
+  #ifdef PIN_VBAT_READ
+  analogReadResolution(12);
+
+  uint32_t raw = 0;
+  for (int i = 0; i < BATTERY_SAMPLES; i++) {
+    raw += analogRead(PIN_VBAT_READ);
+  }
+  raw = raw / BATTERY_SAMPLES;
+
+  return (ADC_MULTIPLIER * raw) / 4096;
+  #else
+  return 0;
+  #endif
+}
 #endif
