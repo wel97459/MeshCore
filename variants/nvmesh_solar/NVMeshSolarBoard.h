@@ -29,13 +29,11 @@ public:
   void begin();
   uint8_t getStartupReason() const override { return startup_reason; }
 
+#ifdef HELTEC_MESH_SOLAR
   uint16_t getBattMilliVolts() override {
-    #ifdef HELTEC_MESH_SOLAR
-      return meshSolarGetBattVoltage();
-    #else
-      return 0;
-    #endif
+    return meshSolarGetBattVoltage();
   }
+#endif
 
   const char* getManufacturerName() const override {
     return "Heltec Mesh Solar";
