@@ -29,4 +29,5 @@ uint16_t NRF52Board::getBattMilliVolts() {
   return 0;
   #endif
 }
+
 #endif
