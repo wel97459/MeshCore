@@ -8,6 +8,7 @@
 #include "nrf_gpiote.h"
 
 #include <helpers/NRF52Board.h>
+
 // LoRa radio module pins for Heltec T114
 #define  P_LORA_DIO_1     20
 #define  P_LORA_NSS       24
@@ -27,6 +28,7 @@ protected:
 
 public:
   void begin();
+  void loop();
   uint8_t getStartupReason() const override { return startup_reason; }
 
 #ifdef HELTEC_MESH_SOLAR
