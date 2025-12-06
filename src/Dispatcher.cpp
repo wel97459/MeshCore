@@ -15,7 +15,7 @@ namespace mesh {
 #endif
 
 #ifndef MAX_NO_RX_INTERVAL
-  #define MAX_NO_RX_INTERVAL 60000 * 65 //This should be long
+  #define MAX_NO_RX_INTERVAL 60000 * 2 * 65 //This should be high then one adverrtising interval to prevent false positives.
 #endif
 
 void Dispatcher::begin() {
