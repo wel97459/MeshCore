@@ -4,7 +4,9 @@
 #include <bluefruit.h>
 #include <Wire.h>
 #include "variant.h"
+#ifdef WDT_ENABLED
 #include "tpl5010.h"
+#endif
 
 static BLEDfu bledfu;
 static TPL5010 tpl5010;
@@ -36,14 +38,18 @@ void NVMeshSolarBoard::begin() {
   #if defined(PIN_BOARD_SDA) && defined(PIN_BOARD_SCL)
     Wire.setPins(PIN_BOARD_SDA, PIN_BOARD_SCL);
   #endif
-
-  tpl5010.begin();
+  
+  #ifdef WDT_ENABLED
+    tpl5010.begin();
+  #endif
 
   Wire.begin();
 }
 
 void NVMeshSolarBoard::loop() {
+  #ifdef WDT_ENABLED
   tpl5010.kick_if_needed();
+  #endif
 }
 
 bool NVMeshSolarBoard::startOTAUpdate(const char* id, char reply[]) {
