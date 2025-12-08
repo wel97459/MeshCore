@@ -6,10 +6,10 @@
 #include "variant.h"
 #ifdef WDT_ENABLED
 #include "tpl5010.h"
+static TPL5010 tpl5010;
 #endif
 
 static BLEDfu bledfu;
-static TPL5010 tpl5010;
 
 static void connect_callback(uint16_t conn_handle)
 {
@@ -38,7 +38,7 @@ void NVMeshSolarBoard::begin() {
   #if defined(PIN_BOARD_SDA) && defined(PIN_BOARD_SCL)
     Wire.setPins(PIN_BOARD_SDA, PIN_BOARD_SCL);
   #endif
-  
+
   #ifdef WDT_ENABLED
     tpl5010.begin();
   #endif
