@@ -28,13 +28,12 @@
 #define  PIN_VBAT_READ    5
 #define  ADC_MULTIPLIER   (3 * 1.73 * 1.187 * 1000)
 
-class RAK4631Board : public NRF52Board {
+class RAK4631Board : public NRF52BoardOTA {
 public:
+  RAK4631Board() : NRF52BoardOTA("RAK4631_OTA") {}
   void begin();
 
   const char* getManufacturerName() const override {
     return "RAK 4631";
   }
-
-  bool startOTAUpdate(const char* id, char reply[]) override;
 };
