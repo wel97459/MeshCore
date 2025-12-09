@@ -26,13 +26,8 @@
 #include <nrf_temp.h>
 
 class MeshSolarBoard : public NRF52Board {
-protected:
-  uint8_t startup_reason;
-
 public:
   void begin();
-  void loop();
-  uint8_t getStartupReason() const override { return startup_reason; }
 
   uint16_t getBattMilliVolts() override {
     #ifdef HELTEC_MESH_SOLAR

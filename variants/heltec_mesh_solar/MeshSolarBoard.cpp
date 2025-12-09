@@ -21,11 +21,9 @@ static void disconnect_callback(uint16_t conn_handle, uint8_t reason)
 }
 
 void MeshSolarBoard::begin() {
-  // for future use, sub-classes SHOULD call this from their begin()
-  startup_reason = BD_STARTUP_NORMAL;
-  #ifdef HELTEC_MESH_SOLAR
-    meshSolarStart();
-  #endif
+  NRF52Board::begin();
+
+  meshSolarStart();
 
 #if defined(PIN_BOARD_SDA) && defined(PIN_BOARD_SCL)
   Wire.setPins(PIN_BOARD_SDA, PIN_BOARD_SCL);
