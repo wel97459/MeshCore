@@ -2,6 +2,7 @@
 
 #include <MeshCore.h>
 #include <Arduino.h>
+#include <helpers/NRF52Board.h>
 
 #include <nrf.h>
 #include <nrf_temp.h>
@@ -24,7 +25,7 @@
 #include <nrf.h>
 #include <nrf_temp.h>
 
-class MeshSolarBoard : public mesh::MainBoard {
+class MeshSolarBoard : public NRF52Board {
 protected:
   uint8_t startup_reason;
 

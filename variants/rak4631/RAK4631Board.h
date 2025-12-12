@@ -24,6 +24,10 @@
 #define SX126X_DIO2_AS_RF_SWITCH  true
 #define SX126X_DIO3_TCXO_VOLTAGE   1.8
 
+// built-ins
+#define  PIN_VBAT_READ    5
+#define  ADC_MULTIPLIER   (3 * 1.73 * 1.187 * 1000)
+
 class RAK4631Board : public NRF52Board {
 protected:
   uint8_t startup_reason;
