@@ -140,6 +140,6 @@ void loop() {
 #ifdef DISPLAY_CLASS
   ui_task.loop();
 #endif
-  board.loop();
   rtc_clock.tick();
+  board.loop();
 }
