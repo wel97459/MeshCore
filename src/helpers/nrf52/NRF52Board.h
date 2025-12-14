@@ -3,7 +3,6 @@
 #include <MeshCore.h>
 #include <Arduino.h>
 
-#if defined(NRF52_PLATFORM)
 
 class NRF52Board : public mesh::MainBoard {
 public:
@@ -19,5 +18,3 @@ public:
     void onAfterTransmit() override {}
   #endif
 };
-
-#endif

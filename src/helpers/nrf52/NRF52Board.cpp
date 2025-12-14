@@ -1,9 +1,12 @@
-#if defined(NRF52_PLATFORM)
 #include "NRF52Board.h"
 
+#ifndef BATTERY_SAMPLES
 #define  BATTERY_SAMPLES 8
-#define  MV_LSB   (3000.0F / 4096.0F) // 12-bit ADC with 3.0V input range
+#endif
 
+#ifndef MV_LSB
+#define  MV_LSB   (3000.0F / 4096.0F) // 12-bit ADC with 3.0V input range
+#endif
 
 // The default is from the built-in temperature sensor of MCU
 float NRF52Board::getMCUTemperature() {
@@ -45,5 +48,3 @@ uint16_t NRF52Board::getBattMilliVolts() {
   return 0;
 #endif
 }
-
-#endif

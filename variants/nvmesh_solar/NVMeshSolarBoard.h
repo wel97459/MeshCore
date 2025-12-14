@@ -7,7 +7,7 @@
 #include "nrf_gpio.h"
 #include "nrf_gpiote.h"
 
-#include <helpers/NRF52Board.h>
+#include <helpers/nrf52/NRF52Board.h>
 
 // LoRa radio module pins for Heltec T114
 #define  P_LORA_DIO_1     20
