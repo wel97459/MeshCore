@@ -1218,7 +1218,11 @@ void MyMesh::handleCmdFrame(size_t len) {
     uint8_t reply[11];
     int i = 0;
     reply[i++] = RESP_CODE_BATT_AND_STORAGE;
-    uint16_t battery_millivolts = board.getBattMilliVolts();
+    #ifndef INA219_BATT_VOLTAGE
+      uint16_t battery_millivolts = board.getBattMilliVolts();
+    #else
+      uint16_t battery_millivolts = sensors.getINA219Battery();
+    #endif
     uint32_t used = _store->getStorageUsedKb();
     uint32_t total = _store->getStorageTotalKb();
     memcpy(&reply[i], &battery_millivolts, 2); i += 2;
