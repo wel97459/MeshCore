@@ -119,7 +119,9 @@ class Dispatcher {
   unsigned long next_tx_time;
   unsigned long cad_busy_start;
   unsigned long radio_nonrx_start;
+  #ifdef RADIO_WDT
   unsigned long radio_norx_pkt;
+  #endif
   unsigned long next_floor_calib_time, next_agc_reset_time;
   bool  prev_isrecv_mode;
   uint32_t n_sent_flood, n_sent_direct;
@@ -143,7 +145,9 @@ protected:
     next_floor_calib_time = next_agc_reset_time = 0;
     _err_flags = 0;
     radio_nonrx_start = 0;
+    #ifdef RADIIO_WDT
     radio_norx_pkt = 0;
+    #endif
     prev_isrecv_mode = true;
   }
 

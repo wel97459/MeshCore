@@ -13,6 +13,7 @@ public:
   virtual void begin();
   virtual uint8_t getStartupReason() const override { return startup_reason; }
   virtual float getMCUTemperature() override;
+  virtual uint16_t getBattMilliVolts() override;
   virtual void reboot() override { NVIC_SystemReset(); }
 };
 

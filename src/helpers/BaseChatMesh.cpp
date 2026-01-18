@@ -146,16 +146,7 @@ int BaseChatMesh::searchPeersByHash(const uint8_t* hash) {
 void BaseChatMesh::getPeerSharedSecret(uint8_t* dest_secret, int peer_idx) {
   int i = matching_peer_indexes[peer_idx];
   if (i >= 0 && i < num_contacts) {
-<<<<<<< HEAD
-<<<<<<< HEAD
     memcpy(dest_secret, contacts[i].getSharedSecret(self_id), PUB_KEY_SIZE);
-=======
-    ensureSharedSecretIsValid(contacts[i]);
-    memcpy(dest_secret, contacts[i].shared_secret, PUB_KEY_SIZE);
->>>>>>> 638f41d (calculate shared_secret on demand)
-=======
-    memcpy(dest_secret, contacts[i].getSharedSecret(self_id), PUB_KEY_SIZE);
->>>>>>> 676c317 (* refactor: on-demand getSharedSecret())
   } else {
     MESH_DEBUG_PRINTLN("getPeerSharedSecret: Invalid peer idx: %d", i);
   }

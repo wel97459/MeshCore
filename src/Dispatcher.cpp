@@ -23,8 +23,9 @@ void Dispatcher::begin() {
   n_recv_flood = n_recv_direct = 0;
   _err_flags = 0;
   radio_nonrx_start = _ms->getMillis();
+  #ifdef RADIO_WDT 
   radio_norx_pkt = _ms->getMillis();
-
+  #endif
   _radio->begin();
   prev_isrecv_mode = _radio->isInRecvMode();
 }
@@ -68,11 +69,13 @@ void Dispatcher::loop() {
   
   //This is to prevent the repeater from being unreachable due to a misconfiged radio.
   //And happens during brownouts when batterty is getting changed back up from a dead state.
+  #ifdef RADIO_WDT
   if (_ms->getMillis() - radio_norx_pkt > MAX_NO_RX_INTERVAL) {   // Radio has not rx a packet for to long!
     _err_flags |= ERR_EVENT_RXPACKET_TIMEOUT;
     //reboot node
     board.reboot();
   }
+  #endif
 
   if (outbound) {  // waiting for outbound send to be completed
     if (_radio->isSendComplete()) {
@@ -222,7 +225,9 @@ void Dispatcher::checkRecv() {
       n_recv_direct++;
       processRecvPacket(pkt);
     }
+    #ifdef RADIO_WDT
     radio_norx_pkt = _ms->getMillis();
+    #endif
   }
 }
 

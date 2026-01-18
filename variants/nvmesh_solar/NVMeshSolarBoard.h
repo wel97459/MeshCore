@@ -38,12 +38,10 @@ public:
 #endif
 
   const char* getManufacturerName() const override {
-    return "Heltec Mesh Solar";
+    return "nvme.sh Solar";
   }
 
   void reboot() override {
     NVIC_SystemReset();
   }
-
-  bool startOTAUpdate(const char* id, char reply[]) override;
 };
