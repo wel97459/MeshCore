@@ -18,6 +18,7 @@ public:
   virtual bool begin() { return false; }
   virtual bool querySensors(uint8_t requester_permissions, CayenneLPP& telemetry) { return false; }
   virtual void loop() { }
+  virtual uint16_t getINA219Battery() const { return 0; }
   virtual int getNumSettings() const { return 0; }
   virtual const char* getSettingName(int i) const { return NULL; }
   virtual const char* getSettingValue(int i) const { return NULL; }

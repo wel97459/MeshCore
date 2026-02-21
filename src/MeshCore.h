@@ -50,6 +50,7 @@ public:
   virtual void onBeforeTransmit() { }
   virtual void onAfterTransmit() { }
   virtual void reboot() = 0;
+  virtual void loop() { }
   virtual void powerOff() { /* no op */ }
   virtual void sleep(uint32_t secs)  { /* no op */ }
   virtual uint32_t getGpio() { return 0; }
