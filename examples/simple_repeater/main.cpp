@@ -37,6 +37,11 @@ void delayedReboot(void *d, const char *msg, const uint32_t delayms) {
 
 static char command[160];
 
+// For power saving
+unsigned long lastActive = 0; // mark last active time
+unsigned long nextSleepinSecs =
+    120; // next sleep in seconds. The first sleep (if enabled) is after 2 minutes from boot
+
 void setup() {
   Serial.begin(115200);
   board.begin();

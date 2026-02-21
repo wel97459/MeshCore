@@ -707,7 +707,9 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
     : mesh::Mesh(radio, ms, rng, rtc, *new StaticPoolPacketManager(32), tables),
       _cli(board, rtc, sensors, acl, &_prefs, this), telemetry(MAX_PACKET_PAYLOAD - 4), region_map(key_store),
       temp_map(key_store), discover_limiter(4, 120), // max 4 every 2 minutes
+      anon_limiter(4, 180)                           // max 4 every 3 minutes
 #if defined(WITH_RS232_BRIDGE)
+      ,
       bridge(&_prefs, WITH_RS232_BRIDGE, _mgr, &rtc)
 #endif
 #if defined(WITH_ESPNOW_BRIDGE)
@@ -732,7 +734,7 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
   _prefs.airtime_factor = 1.0;          // one half
   _prefs.rx_delay_base = 0.0f;          // turn off by default, was 10.0;
   _prefs.tx_delay_factor = 0.5f;        // was 0.25f
-  _prefs.direct_tx_delay_factor = 0.2f; // was zero
+  _prefs.direct_tx_delay_factor = 0.3f; // was 0.2
   StrHelper::strncpy(_prefs.node_name, ADVERT_NAME, sizeof(_prefs.node_name));
   _prefs.node_lat = ADVERT_LAT;
   _prefs.node_lon = ADVERT_LON;
@@ -762,6 +764,9 @@ MyMesh::MyMesh(mesh::MainBoard &board, mesh::Radio &radio, mesh::MillisecondCloc
   _prefs.advert_loc_policy = ADVERT_LOC_PREFS;
 
   _prefs.adc_multiplier = 0.0f; // 0.0f means use default board multiplier
+
+  pending_discover_tag = 0;
+  pending_discover_until = 0;
 }
 
 void MyMesh::begin(FILESYSTEM *fs) {

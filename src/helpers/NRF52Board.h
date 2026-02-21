@@ -50,9 +50,10 @@ public:
   virtual uint8_t getStartupReason() const override { return startup_reason; }
   virtual float getMCUTemperature() override;
   virtual void reboot() override { NVIC_SystemReset(); }
+  bool getBootloaderVersion(char *version, size_t max_len);
   virtual bool startOTAUpdate(const char *id, char reply[]) override;
   virtual void sleep(uint32_t secs) override;
-  uint16_t getBattMilliVolts() override;
+  uint16_t getBattMilliVolts();
 
   void loop() override {}
 
