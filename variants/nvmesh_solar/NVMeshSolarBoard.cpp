@@ -1,21 +1,17 @@
-#include "NVMeshSolarBoard.h"
 
-#include "variant.h"
+#include "NVMeshSolarBoard.h"
 
 #include <Arduino.h>
 #include <Wire.h>
+
 #ifdef WDT_ENABLED
 #include "tpl5010.h"
 static TPL5010 tpl5010;
 #endif
 
 void NVMeshSolarBoard::begin() {
-  // for future use, sub-classes SHOULD call this from their begin()
-  startup_reason = BD_STARTUP_NORMAL;
   NRF52Board::begin();
-#ifdef HELTEC_MESH_SOLAR
-  meshSolarStart();
-#endif
+
 #ifdef P_LORA_TX_LED
   pinMode(P_LORA_TX_LED, OUTPUT);
 #endif
