@@ -43,6 +43,7 @@ public:
   #endif
   bool begin() override;
   bool querySensors(uint8_t requester_permissions, CayenneLPP& telemetry) override;
+  uint16_t getINA219Battery() const override;
   #if ENV_INCLUDE_GPS || defined(ENV_INCLUDE_BME680_BSEC)
   void loop() override;
   #endif

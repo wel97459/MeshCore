@@ -1,7 +1,7 @@
-#include <Arduino.h>   // needed for PlatformIO
-#include <Mesh.h>
-
 #include "MyMesh.h"
+
+#include <Arduino.h> // needed for PlatformIO
+#include <Mesh.h>
 
 #ifdef DISPLAY_CLASS
   #include "UITask.h"
@@ -18,8 +18,26 @@ SimpleMeshTables tables;
 
 MyMesh the_mesh(board, radio_driver, *new ArduinoMillis(), fast_rng, rtc_clock, tables);
 
-void halt() {
-  while (1) ;
+void delayedReboot(void *d, const char *msg, const uint32_t delayms) {
+#ifdef DISPLAY_CLASS
+  DisplayDriver *disp = (DisplayDriver *)d;
+  char tmp[32];
+  sprintf(tmp, "Rebooting in %3.1fs", delayms / 1000.0);
+  disp->startFrame();
+  disp->drawTextCentered(disp->width() / 2, 24, msg);
+  disp->drawTextCentered(disp->width() / 2, 32, tmp);
+  disp->endFrame();
+  delay(delayms);
+#else
+  for (int8_t i = 0; i < delayms / 1000; i++) {
+    delay(500);
+    board.onBeforeTransmit();
+    delay(500);
+    board.onAfterTransmit();
+  }
+#endif
+
+  board.reboot();
 }
 
 static char command[160];
@@ -28,7 +46,9 @@ static char ethernet_command[160];
 #endif
 
 // For power saving
-unsigned long POWERSAVING_FIRSTSLEEP_SECS = 120; // The first sleep (if enabled) from boot
+unsigned long lastActive = 0; // mark last active time
+// next sleep in seconds. The first sleep (if enabled) is after 2 minutes from boot
+unsigned long nextSleepinSecs = 120;
 
 #if defined(PIN_USER_BTN) && defined(_SEEED_SENSECAP_SOLAR_H_)
 static unsigned long userBtnDownAt = 0;
@@ -37,19 +57,24 @@ static unsigned long userBtnDownAt = 0;
 
 void setup() {
   Serial.begin(115200);
-  delay(1000);
-
   board.begin();
 
 #ifdef HAS_EXTERNAL_WATCHDOG
   external_watchdog.begin();
 #endif
 
+  board.onBeforeTransmit();
 #if defined(MESH_DEBUG) && defined(NRF52_PLATFORM)
   // give some extra time for serial to settle so
   // boot debug messages can be seen on terminal
   delay(5000);
+#else
+  delay(1000);
 #endif
+
+  // For power saving
+  lastActive = millis(); // mark last active time since boot
+  board.onAfterTransmit();
 
 #ifdef DISPLAY_CLASS
   if (display.begin()) {
@@ -61,13 +86,16 @@ void setup() {
 #endif
 
   if (!radio_init()) {
-    MESH_DEBUG_PRINTLN("Radio init failed!");
-    halt();
+#ifdef DISPLAY_CLASS
+    delayedReboot(&display, "Radio Init Failed!", 5000);
+#else
+    delayedReboot(NULL, "", 5000);
+#endif
   }
 
   fast_rng.begin(radio_driver.getRngSeed());
 
-  FILESYSTEM* fs;
+  FILESYSTEM *fs;
 #if defined(NRF52_PLATFORM) || defined(STM32_PLATFORM)
   InternalFS.begin();
   fs = &InternalFS;
@@ -82,20 +110,23 @@ void setup() {
   IdentityStore store(LittleFS, "/identity");
   store.begin();
 #else
-  #error "need to define filesystem"
+#error "need to define filesystem"
 #endif
   if (!store.load("_main", the_mesh.self_id)) {
     MESH_DEBUG_PRINTLN("Generating new keypair");
-    the_mesh.self_id = radio_new_identity();   // create new random identity
+    the_mesh.self_id = radio_new_identity(); // create new random identity
     int count = 0;
-    while (count < 10 && (the_mesh.self_id.pub_key[0] == 0x00 || the_mesh.self_id.pub_key[0] == 0xFF)) {  // reserved id hashes
-      the_mesh.self_id = radio_new_identity(); count++;
+    while (count < 10 && (the_mesh.self_id.pub_key[0] == 0x00 ||
+                          the_mesh.self_id.pub_key[0] == 0xFF)) { // reserved id hashes
+      the_mesh.self_id = radio_new_identity();
+      count++;
     }
     store.save("_main", the_mesh.self_id);
   }
 
   Serial.print("Repeater ID: ");
-  mesh::Utils::printHex(Serial, the_mesh.self_id.pub_key, PUB_KEY_SIZE); Serial.println();
+  mesh::Utils::printHex(Serial, the_mesh.self_id.pub_key, PUB_KEY_SIZE);
+  Serial.println();
 
   command[0] = 0;
 #ifdef ETHERNET_ENABLED
@@ -125,7 +156,7 @@ void setup() {
 void loop() {
   // Handle Serial CLI
   int len = strlen(command);
-  while (Serial.available() && len < sizeof(command)-1) {
+  while (Serial.available() && len < sizeof(command) - 1) {
     char c = Serial.read();
     if (c != '\n') {
       command[len++] = c;
@@ -134,13 +165,13 @@ void loop() {
     }
     if (c == '\r') break;
   }
-  if (len == sizeof(command)-1) {  // command buffer full
-    command[sizeof(command)-1] = '\r';
+  if (len == sizeof(command) - 1) { // command buffer full
+    command[sizeof(command) - 1] = '\r';
   }
 
-  if (len > 0 && command[len - 1] == '\r') {  // received complete line
+  if (len > 0 && command[len - 1] == '\r') { // received complete line
     Serial.print('\n');
-    command[len - 1] = 0;  // replace newline with C string null terminator
+    command[len - 1] = 0; // replace newline with C string null terminator
     char reply[160];
     reply[0] = 0;
 #ifdef ETHERNET_ENABLED
@@ -151,10 +182,11 @@ void loop() {
     the_mesh.handleCommand(0, command, reply);  // NOTE: there is no sender_timestamp via serial!
 #endif
     if (reply[0]) {
-      Serial.print("  -> "); Serial.println(reply);
+      Serial.print("  -> ");
+      Serial.println(reply);
     }
 
-    command[0] = 0;  // reset command buffer
+    command[0] = 0; // reset command buffer
   }
 
 #ifdef ETHERNET_ENABLED
@@ -197,11 +229,17 @@ void loop() {
 #endif
   if (the_mesh.getNodePrefs()->powersaving_enabled && !the_mesh.hasPendingWork()) {
 #if defined(NRF52_PLATFORM)
-    board.sleep(0); // nrf ignores seconds param, sleeps whenever possible
+    board.sleep(1800); // nrf ignores seconds param, sleeps whenever possible
 #else
-    if (the_mesh.millisHasNowPassed(POWERSAVING_FIRSTSLEEP_SECS * 1000)) { // To check if it is time to sleep
-      board.sleep(30); // Sleep. Wake up after a while or when receiving a LoRa packet
+    if (the_mesh.millisHasNowPassed(lastActive + nextSleepinSecs * 1000)) { // To check if it is time to sleep
+      board.sleep(1800); // To sleep. Wake up after 30 minutes or when receiving a LoRa packet
+      lastActive = millis();
+      nextSleepinSecs = 5; // Default: To work for 5s and sleep again
+    } else {
+      nextSleepinSecs += 5; // When there is pending work, to work another 5s
     }
 #endif
   }
+  board.loop();
 }
+

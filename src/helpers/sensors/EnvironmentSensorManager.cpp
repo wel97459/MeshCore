@@ -3,9 +3,9 @@
 #include <Wire.h>
 
 #if ENV_PIN_SDA && ENV_PIN_SCL
-#define TELEM_WIRE &Wire1  // Use Wire1 as the I2C bus for Environment Sensors
+#define TELEM_WIRE &Wire1 // Use Wire1 as the I2C bus for Environment Sensors
 #else
-#define TELEM_WIRE &Wire  // Use default I2C bus for Environment Sensors
+#define TELEM_WIRE &Wire // Use default I2C bus for Environment Sensors
 #endif
 
 // ============================================================
@@ -62,7 +62,7 @@ static Adafruit_AHTX0 AHTX0;
 
 #if ENV_INCLUDE_BME280
 #ifndef TELEM_BME280_ADDRESS
-#define TELEM_BME280_ADDRESS    0x76      // BME280 environmental sensor I2C address
+#define TELEM_BME280_ADDRESS 0x76 // BME280 environmental sensor I2C address
 #endif
 #define TELEM_BME280_SEALEVELPRESSURE_HPA (1013.25)    // Atmospheric pressure at sea level
 #include <Adafruit_BME280.h>
@@ -71,11 +71,11 @@ static Adafruit_BME280 BME280;
 
 #if ENV_INCLUDE_BMP280
 #ifndef TELEM_BMP280_ADDRESS
-#define TELEM_BMP280_ADDRESS    0x76      // BMP280 environmental sensor I2C address
+#define TELEM_BMP280_ADDRESS 0x76 // BMP280 environmental sensor I2C address
 #endif
 #define TELEM_BMP280_SEALEVELPRESSURE_HPA (1013.25)    // Atmospheric pressure at sea level
 #include <Adafruit_BMP280.h>
-static Adafruit_BMP280 BMP280(TELEM_WIRE);
+static Adafruit_BMP280 BMP280;
 #endif
 
 #if ENV_INCLUDE_SHTC3
@@ -93,7 +93,6 @@ static SensirionI2cSht4x SHT4X;
 
 #if ENV_INCLUDE_LPS22HB
 #include <Arduino_LPS22HB.h>
-LPS22HBClass LPS22HB(*TELEM_WIRE);
 #endif
 
 #if ENV_INCLUDE_INA3221
@@ -116,6 +115,7 @@ static Adafruit_INA3221 INA3221;
 #endif
 #include <Adafruit_INA219.h>
 static Adafruit_INA219 INA219(TELEM_INA219_ADDRESS);
+static bool INA219_initialized = false;
 #endif
 
 #if ENV_INCLUDE_INA260
@@ -181,6 +181,7 @@ class RAK12500LocationProvider : public LocationProvider {
   int _sats = 0;
   long _epoch = 0;
   bool _fix = false;
+
 public:
   long getLatitude() override { return _lat; }
   long getLongitude() override { return _lng; }
@@ -188,10 +189,10 @@ public:
   long satellitesCount() override { return _sats; }
   bool isValid() override { return _fix; }
   long getTimestamp() override { return _epoch; }
-  void sendSentence(const char * sentence) override { }
-  void reset() override { }
-  void begin() override { }
-  void stop() override { }
+  void sendSentence(const char *sentence) override {}
+  void reset() override {}
+  void begin() override {}
+  void stop() override {}
   void loop() override {
     if (ublox_GNSS.getGnssFixOk(8)) {
       _fix = true;
@@ -377,7 +378,8 @@ static void query_ina3221(uint8_t ch, uint8_t sub_ch, CayenneLPP& lpp) {
 #if ENV_INCLUDE_INA219
 static uint8_t init_ina219(TwoWire* wire, uint8_t) {
   // INA219 static instance was constructed with the address; begin() uses it.
-  return INA219.begin(wire) ? 1 : 0;
+  INA219_initialized = INA219.begin(wire);
+  return INA219_initialized ? 1 : 0;
 }
 static void query_ina219(uint8_t ch, uint8_t, CayenneLPP& lpp) {
   lpp.addVoltage(ch, INA219.getBusVoltage_V());
@@ -618,19 +620,19 @@ bool EnvironmentSensorManager::begin() {
   rakGPSInit();
   #else
   initBasicGPS();
-  #endif
-  #endif
+#endif
+#endif
 
-  #if ENV_PIN_SDA && ENV_PIN_SCL
-    #ifdef NRF52_PLATFORM
+#if ENV_PIN_SDA && ENV_PIN_SCL
+#ifdef NRF52_PLATFORM
   Wire1.setPins(ENV_PIN_SDA, ENV_PIN_SCL);
   Wire1.setClock(100000);
   Wire1.begin();
-    #else
+#else
   Wire1.begin(ENV_PIN_SDA, ENV_PIN_SCL, 100000);
-    #endif
+#endif
   MESH_DEBUG_PRINTLN("Second I2C initialized on pins SDA: %d SCL: %d", ENV_PIN_SDA, ENV_PIN_SCL);
-  #endif
+#endif
 
   // Scan the I2C bus before touching any sensor library.
   bool detected[128] = {};
@@ -654,6 +656,7 @@ bool EnvironmentSensorManager::begin() {
       _active_sensors[_active_sensor_count++] = { def.query, sub };
     }
   }
+
 
   return true;
 }
@@ -681,16 +684,39 @@ bool EnvironmentSensorManager::querySensors(uint8_t requester_permissions, Cayen
   return true;
 }
 
+uint16_t EnvironmentSensorManager::getINA219Battery() const {
+#if ENV_INCLUDE_INA219
+  if (INA219_initialized) {
+    return INA219.getBusVoltage_V() * 1000;
+  } else {
+    return 0;
+  }
+#else
+  return 0;
+#endif
+}
+
+uint16_t EnvironmentSensorManager::getINA219Battery() const {
+#if ENV_INCLUDE_INA219
+  if (INA219_initialized) {
+    return INA219.getBusVoltage_V() * 1000;
+  } else {
+    return 0;
+  }
+#else
+  return 0;
+#endif
+}
 
 int EnvironmentSensorManager::getNumSettings() const {
   int settings = 0;
-  #if ENV_INCLUDE_GPS
-    if (gps_detected) settings++;  // only show GPS setting if GPS is detected
-  #endif
+#if ENV_INCLUDE_GPS
+  if (gps_detected) settings++; // only show GPS setting if GPS is detected
+#endif
   return settings;
 }
 
-const char* EnvironmentSensorManager::getSettingName(int i) const {
+const char *EnvironmentSensorManager::getSettingName(int i) const {
   int settings = 0;
   #if ENV_INCLUDE_GPS
     if (gps_detected && i == settings++) {
@@ -700,7 +726,7 @@ const char* EnvironmentSensorManager::getSettingName(int i) const {
   return NULL;
 }
 
-const char* EnvironmentSensorManager::getSettingValue(int i) const {
+const char *EnvironmentSensorManager::getSettingValue(int i) const {
   int settings = 0;
   #if ENV_INCLUDE_GPS
     if (gps_detected && i == settings++) {
@@ -710,8 +736,8 @@ const char* EnvironmentSensorManager::getSettingValue(int i) const {
   return NULL;
 }
 
-bool EnvironmentSensorManager::setSettingValue(const char* name, const char* value) {
-  #if ENV_INCLUDE_GPS
+bool EnvironmentSensorManager::setSettingValue(const char *name, const char *value) {
+#if ENV_INCLUDE_GPS
   if (gps_detected && strcmp(name, "gps") == 0) {
     if (strcmp(value, "0") == 0) {
       stop_gps();
@@ -725,8 +751,8 @@ bool EnvironmentSensorManager::setSettingValue(const char* name, const char* val
     gps_update_interval_sec = interval_seconds > 0 ? interval_seconds : 1;
     return true;
   }
-  #endif
-  return false;  // not supported
+#endif
+  return false; // not supported
 }
 
 #if ENV_INCLUDE_GPS
@@ -734,19 +760,19 @@ void EnvironmentSensorManager::initBasicGPS() {
 
   Serial1.setPins(PIN_GPS_TX, PIN_GPS_RX);
 
-  #ifdef GPS_BAUD_RATE
+#ifdef GPS_BAUD_RATE
   Serial1.begin(GPS_BAUD_RATE);
-  #else
+#else
   Serial1.begin(9600);
-  #endif
+#endif
 
   // Try to detect if GPS is physically connected to determine if we should expose the setting
   _location->begin();
   _location->reset();
 
-  #ifndef PIN_GPS_EN
-    MESH_DEBUG_PRINTLN("No GPS wake/reset pin found for this board. Continuing on...");
-  #endif
+#ifndef PIN_GPS_EN
+  MESH_DEBUG_PRINTLN("No GPS wake/reset pin found for this board. Continuing on...");
+#endif
 
   // Give GPS a moment to power up and send data
   delay(1000);
@@ -760,29 +786,29 @@ void EnvironmentSensorManager::initBasicGPS() {
 
   if (gps_detected) {
     MESH_DEBUG_PRINTLN("GPS detected");
-    #ifdef PERSISTANT_GPS
-      gps_active = true;
-      return;
-    #endif
+#ifdef PERSISTANT_GPS
+    gps_active = true;
+    return;
+#endif
   } else {
     MESH_DEBUG_PRINTLN("No GPS detected");
   }
   _location->stop();
-  gps_active = false; //Set GPS visibility off until setting is changed
+  gps_active = false; // Set GPS visibility off until setting is changed
 }
 
 // gps code for rak might be moved to MicroNMEALoactionProvider
 // or make a new location provider ...
 #ifdef RAK_WISBLOCK_GPS
-void EnvironmentSensorManager::rakGPSInit(){
+void EnvironmentSensorManager::rakGPSInit() {
 
   Serial1.setPins(PIN_GPS_TX, PIN_GPS_RX);
 
-  #ifdef GPS_BAUD_RATE
+#ifdef GPS_BAUD_RATE
   Serial1.begin(GPS_BAUD_RATE);
-  #else
+#else
   Serial1.begin(9600);
-  #endif
+#endif
 
   //search for the correct IO standby pin depending on socket used
   if(gpsIsAwake(WB_IO2)){
@@ -795,17 +821,16 @@ void EnvironmentSensorManager::rakGPSInit(){
     MESH_DEBUG_PRINTLN("No GPS found");
     gps_active = false;
     gps_detected = false;
-    Serial1.end();
     return;
   }
 
-  #ifndef FORCE_GPS_ALIVE // for use with repeaters, until GPS toggle is implimented
-  //Now that GPS is found and set up, set to sleep for initial state
+#ifndef FORCE_GPS_ALIVE // for use with repeaters, until GPS toggle is implimented
+  // Now that GPS is found and set up, set to sleep for initial state
   stop_gps();
-  #endif
+#endif
 }
 
-bool EnvironmentSensorManager::gpsIsAwake(uint8_t ioPin){
+bool EnvironmentSensorManager::gpsIsAwake(uint8_t ioPin) {
 
   #if defined(ETHERNET_ENABLED) && defined(RAK_BOARD)
     if (ioPin == WB_IO2) {
@@ -818,12 +843,12 @@ bool EnvironmentSensorManager::gpsIsAwake(uint8_t ioPin){
   pinMode(ioPin,OUTPUT);
   digitalWrite(ioPin,LOW);
   delay(500);
-  digitalWrite(ioPin,HIGH);
+  digitalWrite(ioPin, HIGH);
   delay(500);
 
-  //Try to init RAK12500 on I2C
-  if (ublox_GNSS.begin(Wire) == true){
-    MESH_DEBUG_PRINTLN("RAK12500 GPS init correctly with pin %i",ioPin);
+  // Try to init RAK12500 on I2C
+  if (ublox_GNSS.begin(Wire) == true) {
+    MESH_DEBUG_PRINTLN("RAK12500 GPS init correctly with pin %i", ioPin);
     ublox_GNSS.setI2COutput(COM_TYPE_UBX);
     ublox_GNSS.enableGNSS(true, SFE_UBLOX_GNSS_ID_GPS);
     ublox_GNSS.enableGNSS(true, SFE_UBLOX_GNSS_ID_GALILEO);
@@ -841,7 +866,7 @@ bool EnvironmentSensorManager::gpsIsAwake(uint8_t ioPin){
 
     _location = &RAK12500_provider;
     return true;
-  } else if (Serial1.available()) {
+  } else if (Serial1) {
     MESH_DEBUG_PRINTLN("Serial GPS init correctly and is turned on");
 #ifdef PIN_GPS_EN
     if(PIN_GPS_EN){
@@ -862,11 +887,11 @@ bool EnvironmentSensorManager::gpsIsAwake(uint8_t ioPin){
 
 void EnvironmentSensorManager::start_gps() {
   gps_active = true;
-  #ifdef RAK_WISBLOCK_GPS
-    pinMode(gpsResetPin, OUTPUT);
-    digitalWrite(gpsResetPin, HIGH);
-    return;
-  #endif
+#ifdef RAK_WISBLOCK_GPS
+  pinMode(gpsResetPin, OUTPUT);
+  digitalWrite(gpsResetPin, HIGH);
+  return;
+#endif
 
   _location->begin();
   _location->reset();
@@ -878,17 +903,17 @@ void EnvironmentSensorManager::start_gps() {
 
 void EnvironmentSensorManager::stop_gps() {
   gps_active = false;
-  #ifdef RAK_WISBLOCK_GPS
-    pinMode(gpsResetPin, OUTPUT);
-    digitalWrite(gpsResetPin, LOW);
-    return;
-  #endif
+#ifdef RAK_WISBLOCK_GPS
+  pinMode(gpsResetPin, OUTPUT);
+  digitalWrite(gpsResetPin, LOW);
+  return;
+#endif
 
   _location->stop();
 
-  #ifndef PIN_GPS_EN
+#ifndef PIN_GPS_EN
   MESH_DEBUG_PRINTLN("Stop GPS is N/A on this board. Actual GPS state unchanged");
-  #endif
+#endif
 }
 #endif // ENV_INCLUDE_GPS
 
@@ -902,24 +927,24 @@ void EnvironmentSensorManager::loop() {
   }
   if ((long)(millis() - next_gps_update) > 0) {
 
-    if(gps_active){
-    #ifdef RAK_WISBLOCK_GPS
-    if ((i2cGPSFlag || serialGPSFlag) && _location->isValid()) {
-      node_lat = ((double)_location->getLatitude())/1000000.;
-      node_lon = ((double)_location->getLongitude())/1000000.;
-      MESH_DEBUG_PRINTLN("lat %f lon %f", node_lat, node_lon);
-      node_altitude = ((double)_location->getAltitude()) / 1000.0;
-      MESH_DEBUG_PRINTLN("lat %f lon %f alt %f", node_lat, node_lon, node_altitude);
-    }
-    #else
-    if (_location->isValid()) {
-      node_lat = ((double)_location->getLatitude())/1000000.;
-      node_lon = ((double)_location->getLongitude())/1000000.;
-      MESH_DEBUG_PRINTLN("lat %f lon %f", node_lat, node_lon);
-      node_altitude = ((double)_location->getAltitude()) / 1000.0;
-      MESH_DEBUG_PRINTLN("lat %f lon %f alt %f", node_lat, node_lon, node_altitude);
-    }
-    #endif
+    if (gps_active) {
+#ifdef RAK_WISBLOCK_GPS
+      if ((i2cGPSFlag || serialGPSFlag) && _location->isValid()) {
+        node_lat = ((double)_location->getLatitude()) / 1000000.;
+        node_lon = ((double)_location->getLongitude()) / 1000000.;
+        MESH_DEBUG_PRINTLN("lat %f lon %f", node_lat, node_lon);
+        node_altitude = ((double)_location->getAltitude()) / 1000.0;
+        MESH_DEBUG_PRINTLN("lat %f lon %f alt %f", node_lat, node_lon, node_altitude);
+      }
+#else
+      if (_location->isValid()) {
+        node_lat = ((double)_location->getLatitude()) / 1000000.;
+        node_lon = ((double)_location->getLongitude()) / 1000000.;
+        MESH_DEBUG_PRINTLN("lat %f lon %f", node_lat, node_lon);
+        node_altitude = ((double)_location->getAltitude()) / 1000.0;
+        MESH_DEBUG_PRINTLN("lat %f lon %f alt %f", node_lat, node_lon, node_altitude);
+      }
+#endif
     }
     next_gps_update = millis() + (gps_update_interval_sec * 1000);
   }
@@ -948,3 +973,4 @@ void EnvironmentSensorManager::loop() {
   #endif  // ENV_INCLUDE_BME680_BSEC
 }
 #endif // ENV_INCLUDE_GPS || ENV_INCLUDE_BME680_BSEC
+
