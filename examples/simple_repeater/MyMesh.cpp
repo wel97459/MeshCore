@@ -264,7 +264,11 @@ int MyMesh::handleRequest(ClientInfo *sender, uint32_t sender_timestamp, uint8_t
 
     // query other sensors -- target specific
     if ((sender->permissions & PERM_ACL_ROLE_MASK) == PERM_ACL_GUEST) {
-      perm_mask = 0x04; // just base telemetry allowed
+      #ifdef GUEST_ALL_TELEMETRY
+        perm_mask = TELEM_PERM_BASE | TELEM_PERM_ENVIRONMENT; // just base telemetry allowed
+      #else
+        perm_mask = TELEM_PERM_NONE; // just base telemetry allowed
+      #endif
     }
     sensors.querySensors(perm_mask, telemetry);
 
