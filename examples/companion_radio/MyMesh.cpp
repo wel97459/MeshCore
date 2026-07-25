@@ -1889,7 +1889,11 @@ void MyMesh::handleCmdFrame(size_t len) {
       int i = 0;
       out_frame[i++] = RESP_CODE_STATS;
       out_frame[i++] = STATS_TYPE_CORE;
-      uint16_t battery_mv = board.getBattMilliVolts();
+    #ifdef INA219_BATT_VOLTAGE
+    uint16_t battery_mv = sensors.getINA219Battery();
+    #else
+    uint16_t battery_mv = board.getBattMilliVolts();
+    #endif
       uint32_t uptime_secs = _ms->getMillis() / 1000;
       uint8_t queue_len = (uint8_t)_mgr->getOutboundTotal();
       memcpy(&out_frame[i], &battery_mv, 2);
@@ -2300,4 +2304,5 @@ bool MyMesh::advert() {
 bool MyMesh::hasPendingWork() const {
   return _mgr->getOutboundTotal() > 0 || dirty_contacts_expiry != 0;
 }
+
 

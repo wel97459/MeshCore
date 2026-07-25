@@ -219,10 +219,10 @@ int MyMesh::handleRequest(ClientInfo *sender, uint32_t sender_timestamp, uint8_t
 
   if (payload[0] == REQ_TYPE_GET_STATUS) { // guests can also access this now
     RepeaterStats stats;
-#ifndef INA219_BATT_VOLTAGE
-    stats.batt_milli_volts = board.getBattMilliVolts();
-#else
+#ifdef INA219_BATT_VOLTAGE
     stats.batt_milli_volts = sensors.getINA219Battery();
+#else
+    stats.batt_milli_volts = board.getBattMilliVolts();
 #endif
     stats.curr_tx_queue_len = _mgr->getOutboundTotal();
     stats.curr_tx_queue_len = _mgr->getOutboundCount(0xFFFFFFFF);
@@ -252,9 +252,9 @@ int MyMesh::handleRequest(ClientInfo *sender, uint32_t sender_timestamp, uint8_t
 
     telemetry.reset();
 #ifndef INA219_BATT_VOLTAGE
-    telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+      telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
 #else
-    telemetry.addVoltage(TELEM_CHANNEL_SELF + 1, (float)board.getBattMilliVolts() / 1000.0f);
+      telemetry.addVoltage(TELEM_CHANNEL_SELF+1, (float)board.getBattMilliVolts() / 1000.0f);
 #endif
 
     float temperature = board.getMCUTemperature();

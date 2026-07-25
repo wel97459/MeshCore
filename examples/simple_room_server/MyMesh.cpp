@@ -161,7 +161,11 @@ int MyMesh::handleRequest(ClientInfo *sender, uint32_t sender_timestamp, uint8_t
 
   if (payload[0] == REQ_TYPE_GET_STATUS) {
     ServerStats stats;
+  #ifdef INA219_BATT_VOLTAGE
+    stats.batt_milli_volts = sensors.getINA219Battery();
+  #else
     stats.batt_milli_volts = board.getBattMilliVolts();
+  #endif
     stats.curr_tx_queue_len = _mgr->getOutboundTotal();
     stats.noise_floor = (int16_t)_radio->getNoiseFloor();
     stats.last_rssi = (int16_t)radio_driver.getLastRSSI();
@@ -188,7 +192,11 @@ int MyMesh::handleRequest(ClientInfo *sender, uint32_t sender_timestamp, uint8_t
         ~(payload[1]); // NEW: first reserved byte (of 4), is now inverse mask to apply to permissions
 
     telemetry.reset();
-    telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+#ifndef INA219_BATT_VOLTAGE
+      telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+#else
+      telemetry.addVoltage(TELEM_CHANNEL_SELF+1, (float)board.getBattMilliVolts() / 1000.0f);
+#endif
     // query other sensors -- target specific
     if ((sender->permissions & PERM_ACL_ROLE_MASK) == PERM_ACL_GUEST) {
       perm_mask = TELEM_PERM_ENVIRONMENT; // just base telemetry allowed

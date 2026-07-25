@@ -122,7 +122,11 @@ class HomeScreen : public UIScreen {
     if (millis() > next_sensors_refresh) {
       sensors_lpp.reset();
       sensors_nb = 0;
-      sensors_lpp.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+#ifndef INA219_BATT_VOLTAGE
+      telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+#else
+      telemetry.addVoltage(TELEM_CHANNEL_SELF+1, (float)board.getBattMilliVolts() / 1000.0f);
+#endif
       sensors.querySensors(0xFF, sensors_lpp);
       LPPReader reader (sensors_lpp.getBuffer(), sensors_lpp.getSize());
       uint8_t channel, type;
@@ -433,7 +437,11 @@ void UITask::begin(DisplayDriver* display, SensorManager* sensors, NodePrefs* no
   _display = display;
   _sensors = sensors;
   _auto_off = millis() + AUTO_OFF_MILLIS;
-  _cached_batt_mv = getBattMilliVolts();
+  #ifdef INA219_BATT_VOLTAGE
+    uint16_t _cached_batt_mv =  sensors.getINA219Battery();
+  #else
+    uint16_t _cached_batt_mv =  getBattMilliVolts();
+  #endif
 
 #if defined(PIN_USER_BTN)
   user_btn.begin();
@@ -729,7 +737,11 @@ void UITask::loop() {
 
 #ifdef AUTO_SHUTDOWN_MILLIVOLTS
   if (millis() > next_batt_chck) {
-    _cached_batt_mv = getBattMilliVolts();
+  #ifdef INA219_BATT_VOLTAGE
+    _cached_batt_mv =  sensors.getINA219Battery();
+  #else
+    _cached_batt_mv =  getBattMilliVolts();
+  #endif
     if (_cached_batt_mv > 0 && _cached_batt_mv < AUTO_SHUTDOWN_MILLIVOLTS) {
       if(!board.isExternalPowered()) {
         if (_display != NULL) {
@@ -748,7 +760,11 @@ void UITask::loop() {
   }
 #else
   if (_display != NULL && _display->isOn() && millis() >= next_batt_chck) {
-    _cached_batt_mv = getBattMilliVolts();
+  #ifdef INA219_BATT_VOLTAGE
+    uint16_t _cached_batt_mv =  sensors.getINA219Battery();
+  #else
+    uint16_t _cached_batt_mv =  getBattMilliVolts();
+  #endif
     next_batt_chck = millis() + 8000;
   }
 #endif

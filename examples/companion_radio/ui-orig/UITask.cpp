@@ -248,7 +248,11 @@ void UITask::renderCurrScreen() {
     _display->print(_node_prefs->node_name);
 
     // battery voltage
-    renderBatteryIndicator(_board->getBattMilliVolts());
+    #ifdef INA219_BATT_VOLTAGE
+      renderBatteryIndicator(_sensors.getINA219Battery());
+    #else
+      renderBatteryIndicator(_board->getBattMilliVolts());
+    #endif
 
     // freq / sf
     _display->setCursor(0, 20);

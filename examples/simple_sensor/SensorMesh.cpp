@@ -177,7 +177,11 @@ uint8_t SensorMesh::handleRequest(uint8_t perms, uint32_t sender_timestamp, uint
     uint8_t perm_mask = ~(payload[0]);    // NEW: first reserved byte (of 4), is now inverse mask to apply to permissions
 
     telemetry.reset();
-    telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+#ifndef INA219_BATT_VOLTAGE
+      telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+#else
+      telemetry.addVoltage(TELEM_CHANNEL_SELF+1, (float)board.getBattMilliVolts() / 1000.0f);
+#endif
     // query other sensors -- target specific
     sensors.querySensors(0xFF & perm_mask, telemetry);  // allow all telemetry permissions for admin or guest
     // TODO: let requester know permissions they have:  telemetry.addPresence(TELEM_CHANNEL_SELF, perms);
@@ -926,7 +930,11 @@ void SensorMesh::loop() {
   uint32_t curr = getRTCClock()->getCurrentTime();
   if (curr >= last_read_time + SENSOR_READ_INTERVAL_SECS) {
     telemetry.reset();
-    telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+#ifndef INA219_BATT_VOLTAGE
+      telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+#else
+      telemetry.addVoltage(TELEM_CHANNEL_SELF+1, (float)board.getBattMilliVolts() / 1000.0f);
+#endif
     // query other sensors -- target specific
     sensors.querySensors(0xFF, telemetry);  // allow all telemetry permissions
 

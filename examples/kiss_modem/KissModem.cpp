@@ -673,7 +673,11 @@ void KissModem::handleGetStats() {
 }
 
 void KissModem::handleGetBattery() {
-  uint16_t mv = _board.getBattMilliVolts();
+  #ifdef INA219_BATT_VOLTAGE
+    uint16_t mv =  sensors.getINA219Battery();
+  #else
+    uint16_t mv =  getBattMilliVolts();
+  #endif
   writeHardwareFrame(HW_RESP(HW_CMD_GET_BATTERY), (uint8_t*)&mv, 2);
 }
 

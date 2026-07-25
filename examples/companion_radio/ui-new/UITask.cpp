@@ -160,7 +160,11 @@ class HomeScreen : public UIScreen {
     if (millis() > next_sensors_refresh) {
       sensors_lpp.reset();
       sensors_nb = 0;
-      sensors_lpp.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+#ifndef INA219_BATT_VOLTAGE
+      telemetry.addVoltage(TELEM_CHANNEL_SELF, (float)board.getBattMilliVolts() / 1000.0f);
+#else
+      telemetry.addVoltage(TELEM_CHANNEL_SELF+1, (float)board.getBattMilliVolts() / 1000.0f);
+#endif
       sensors.querySensors(0xFF, sensors_lpp);
       LPPReader reader (sensors_lpp.getBuffer(), sensors_lpp.getSize());
       uint8_t channel, type;
@@ -201,7 +205,11 @@ public:
     display.print(filtered_name);
 
     // battery voltage
-    renderBatteryIndicator(display, _task->getBattMilliVolts());
+    #ifdef INA219_BATT_VOLTAGE
+      renderBatteryIndicator(_sensors.getINA219Battery());
+    #else
+      renderBatteryIndicator(_board->getBattMilliVolts());
+    #endif
 
     // curr page indicator
     if (UIColor::title_bkg == UIColor::window_bkg) {
@@ -862,7 +870,11 @@ void UITask::loop() {
 
 #ifdef AUTO_SHUTDOWN_MILLIVOLTS
   if (millis() > next_batt_chck) {
-    uint16_t milliVolts = getBattMilliVolts();
+    #ifdef INA219_BATT_VOLTAGE
+    uint16_t battery_millivolts = sensors.getINA219Battery();
+    #else
+    uint16_t battery_millivolts = board.getBattMilliVolts();
+    #endif
     if (milliVolts > 0 && milliVolts < AUTO_SHUTDOWN_MILLIVOLTS) {
       if(!board.isExternalPowered()) {
         if (_display != NULL) {
