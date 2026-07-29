@@ -384,7 +384,9 @@ static uint8_t init_ina219(TwoWire* wire, uint8_t) {
 static void query_ina219(uint8_t ch, uint8_t, CayenneLPP& lpp) {
   lpp.addVoltage(ch, INA219.getBusVoltage_V());
   lpp.addCurrent(ch, INA219.getCurrent_mA() / 1000.0f);
+#ifndef NO_INA219_WATTS
   lpp.addPower(ch, INA219.getPower_mW() / 1000.0f);
+#endif
 }
 #endif
 
@@ -670,6 +672,10 @@ bool EnvironmentSensorManager::begin() {
 bool EnvironmentSensorManager::querySensors(uint8_t requester_permissions, CayenneLPP& telemetry) {
   next_available_channel = TELEM_CHANNEL_SELF + 1;
 
+#ifdef INA219_BATT_VOLTAGE
+  next_available_channel--;
+#endif
+
   if (requester_permissions & TELEM_PERM_LOCATION && gps_active) {
     telemetry.addGPS(TELEM_CHANNEL_SELF, node_lat, node_lon, node_altitude);
   }
@@ -677,23 +683,14 @@ bool EnvironmentSensorManager::querySensors(uint8_t requester_permissions, Cayen
   if (requester_permissions & TELEM_PERM_ENVIRONMENT) {
     for (int i = 0; i < _active_sensor_count; i++) {
       _active_sensors[i].query(next_available_channel, _active_sensors[i].sub_channel, telemetry);
+      #ifdef INA219_BATT_VOLTAGE
+      if (next_available_channel == 1) next_available_channel++; // skip channel 3 if INA219 battery voltage is enabled
+      #endif
       next_available_channel++;
     }
   }
 
   return true;
-}
-
-uint16_t EnvironmentSensorManager::getINA219Battery() const {
-#if ENV_INCLUDE_INA219
-  if (INA219_initialized) {
-    return INA219.getBusVoltage_V() * 1000;
-  } else {
-    return 0;
-  }
-#else
-  return 0;
-#endif
 }
 
 uint16_t EnvironmentSensorManager::getINA219Battery() const {

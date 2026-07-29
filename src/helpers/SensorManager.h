@@ -7,7 +7,8 @@
 #define TELEM_PERM_LOCATION     0x02
 #define TELEM_PERM_ENVIRONMENT  0x04   // permission to access environment sensors
 
-#define TELEM_CHANNEL_SELF   1   // LPP data channel for 'self' device
+#define TELEM_CHANNEL_SELF 1   // LPP data channel for 'self' device
+
 
 class SensorManager {
 public:
